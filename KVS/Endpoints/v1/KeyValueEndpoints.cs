@@ -9,6 +9,8 @@ public record struct ReadValueRequest(string Key);
 
 public record struct UpdateKeyValueRequest(string Key, string NewValue);
 
+public record struct RemoveKeyRequest(string Key);
+
 public static class KeyValueEndpoints
 {
     static public WebApplication MapKeyValueV1Endpoints(this WebApplication app)
@@ -89,6 +91,26 @@ public static class KeyValueEndpoints
             success =>
             {
                 logger.LogInformation("The key '{Key}' was updated to the value '{Value}'", request.Key, request.NewValue);
+                return Results.NoContent();
+            },
+            notFound =>
+            {
+                logger.LogInformation("The key '{Key}' was not found", request.Key);
+                return Results.NotFound($"The key '{request.Key}' was not found.");
+            }
+        );
+    }
+
+    static public IResult HandleRemoveKeyRequest(ILogger<RemoveKeyRequest> logger, IKeyValueRepository repo, [FromBody] RemoveKeyRequest request)
+    {
+        logger.LogInformation("The value of key '{Key}' was requested to be deleted", request.Key);
+
+        var result = repo.RemoveByKey(request.Key);
+
+        return result.Match(
+            success =>
+            {
+                logger.LogInformation("The key '{Key}' was deleted", request.Key);
                 return Results.NoContent();
             },
             notFound =>

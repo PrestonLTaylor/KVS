@@ -145,7 +145,50 @@ public sealed class KeyValueV1EndpointTests
         Assert.That(notFound, Is.Not.Null);
     }
 
+    [Test]
+    public void HandleRemoveKeyRequest_ReturnsNoContent_WhenKeyIsPresent()
+    {
+        // Arrange
+        const string presentKey = "present";
+        var request = new RemoveKeyRequest(presentKey);
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        keyValueRepoMock
+            .Setup(m => m.RemoveByKey(presentKey))
+            .Returns(new Success());
+
+        // Act
+        var result = KeyValueEndpoints.HandleRemoveKeyRequest(DeleteLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var noContent = result as NoContent;
+        Assert.That(noContent, Is.Not.Null);
+    }
+
+    [Test]
+    public void HandleRemoveKeyRequest_ReturnsNotFound_WhenKeyIsNotPresent()
+    {
+        // Arrange
+        const string notPresentKey = "notpresent";
+        var request = new RemoveKeyRequest(notPresentKey);
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        keyValueRepoMock
+            .Setup(m => m.RemoveByKey(notPresentKey))
+            .Returns(new OneOf.Types.NotFound());
+
+        // Act
+        var result = KeyValueEndpoints.HandleRemoveKeyRequest(DeleteLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var notFound = result as NotFound<string>;
+        Assert.That(notFound, Is.Not.Null);
+    }
+
     static private NullLogger<CreateKeyValueRequest> CreateLogger { get; } = new();
     static private NullLogger<ReadValueRequest> ReadLogger { get; } = new();
     static private NullLogger<UpdateKeyValueRequest> UpdateLogger { get; } = new();
+    static private NullLogger<RemoveKeyRequest> DeleteLogger { get; } = new();
 }
