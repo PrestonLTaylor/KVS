@@ -6,6 +6,9 @@ namespace KVS.Repositories;
 
 public sealed class KeyValueRepository : IKeyValueRepository
 {
+    public KeyValueRepository() { }
+    public KeyValueRepository(Dictionary<string, string> initialKeyValues) => keyValueCache = initialKeyValues.ToDictionary();
+
     public OneOf<Success, AlreadyPresentError> AddKeyValue(string key, string value)
     {
         if (keyValueCache.TryAdd(key, value))

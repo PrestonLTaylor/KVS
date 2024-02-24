@@ -31,10 +31,9 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string duplicateKey = "Duplicate";
-        var keyValueRepository = new KeyValueRepository();
+        var keyValueRepository = new KeyValueRepository(new() { { duplicateKey, "" } });
 
         // Act
-        keyValueRepository.AddKeyValue(duplicateKey, "");
         var result = keyValueRepository.AddKeyValue(duplicateKey, "");
 
         // Assert
