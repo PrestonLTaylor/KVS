@@ -1,3 +1,4 @@
+using KVS.Endpoints.v1;
 using KVS.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,5 +18,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapKeyValueV1Endpoints();
 
 app.Run();
