@@ -58,6 +58,51 @@ public sealed class KeyValueV1EndpointTests
         var created = result as Conflict<string>;
         Assert.That(created, Is.Not.Null);
     }
+    
+    [Test]
+    public void HandleReadValueRequest_ReturnsOk_WhenKeyIsPresent()
+    {
+        // Arrange
+        const string presentKey = "present";
+        const string expectedValue = "value";
+        var request = new ReadValueRequest(presentKey);
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        keyValueRepoMock
+            .Setup(m => m.GetValueByKey(presentKey))
+            .Returns(new Success<string>(expectedValue));
+
+        // Act
+        var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var ok = result as Ok<string>;
+        Assert.That(ok, Is.Not.Null);
+        Assert.That(ok.Value, Is.EqualTo(expectedValue));
+    }
+
+    [Test]
+    public void HandleReadValueRequest_ReturnsNotFound_WhenKeyIsNotPresent()
+    {
+        // Arrange
+        const string notPresentKey = "notpresent";
+        var request = new ReadValueRequest(notPresentKey);
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        keyValueRepoMock
+            .Setup(m => m.GetValueByKey(notPresentKey))
+            .Returns(new OneOf.Types.NotFound());
+
+        // Act
+        var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var notFound = result as NotFound<string>;
+        Assert.That(notFound, Is.Not.Null);
+    }
 
     static private NullLogger<CreateKeyValueRequest> CreateLogger { get; } = new NullLogger<CreateKeyValueRequest>();
+    static private NullLogger<ReadValueRequest> ReadLogger { get; } = new NullLogger<ReadValueRequest>();
 }

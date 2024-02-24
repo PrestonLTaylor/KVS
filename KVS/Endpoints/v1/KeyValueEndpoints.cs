@@ -5,6 +5,8 @@ namespace KVS.Endpoints.v1;
 
 public record struct CreateKeyValueRequest(string NewKey, string Value);
 
+public record struct ReadValueRequest(string Key);
+
 public static class KeyValueEndpoints
 {
     static public WebApplication MapKeyValueV1Endpoints(this WebApplication app)
@@ -51,6 +53,26 @@ public static class KeyValueEndpoints
             {
                 logger.LogInformation("Creation of key '{Key}' failed as the key already exists", request.NewKey);
                 return Results.Conflict($"The key '{request.NewKey}' already exists.");
+            }
+        );
+    }
+
+    static public IResult HandleReadValueRequest(ILogger<ReadValueRequest> logger, IKeyValueRepository repo, [FromBody] ReadValueRequest request)
+    {
+        logger.LogInformation("The value of Key '{Key}' was requested", request.Key);
+
+        var result = repo.GetValueByKey(request.Key);
+
+        return result.Match(
+            success =>
+            {
+                logger.LogInformation("The key '{Key}' was found with the value of '{Value}'", request.Key, success.Value);
+                return Results.Ok(success.Value);
+            },
+            notFound =>
+            {
+                logger.LogInformation("The key '{Key}' was not found", request.Key);
+                return Results.NotFound($"The key '{request.Key}' was not found.");
             }
         );
     }
