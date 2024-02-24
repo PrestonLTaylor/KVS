@@ -19,6 +19,16 @@ public sealed class KeyValueRepository : IKeyValueRepository
         return new AlreadyPresentError();
     }
 
+    public OneOf<Success, NotFound> RemoveByKey(string key)
+    {
+        if (keyValueCache.Remove(key))
+        {
+            return new Success();
+        }
+
+        return new NotFound();  
+    }
+
     private readonly Dictionary<string, string> keyValueCache = [];
     public IReadOnlyDictionary<string, string> KeyValueCache
     {

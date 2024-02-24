@@ -40,4 +40,34 @@ public sealed class KeyValueRepositoryTests
         var alreadyPresentError = result.Value as AlreadyPresentError?;
         Assert.That(alreadyPresentError, Is.Not.Null);
     }
+
+    [Test]
+    public void RemoveByKey_ReturnsSuccess_WhenKeyIsPresent()
+    {
+        // Arrange
+        const string presentKey = "present";
+        var keyValueRepository = new KeyValueRepository(new() { { presentKey, "" } });
+
+        // Act
+        var result = keyValueRepository.RemoveByKey(presentKey);
+
+        // Assert
+        var success = result.Value as Success?;
+        Assert.That(success, Is.Not.Null);
+    }
+
+    [Test]
+    public void RemoveByKey_ReturnsNotFound_WhenKeyIsNotPresent()
+    {
+        // Arrange
+        const string notPresentKey = "notpresent";
+        var keyValueRepository = new KeyValueRepository();
+
+        // Act
+        var result = keyValueRepository.RemoveByKey(notPresentKey);
+
+        // Assert
+        var notFound = result.Value as NotFound?;
+        Assert.That(notFound, Is.Not.Null);
+    }
 }

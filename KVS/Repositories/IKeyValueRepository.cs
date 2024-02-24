@@ -7,4 +7,5 @@ namespace KVS.Repositories;
 public interface IKeyValueRepository
 {
     public OneOf<Success, AlreadyPresentError> AddKeyValue(string key, string value);
+    public OneOf<Success, NotFound> RemoveByKey(string key);
 }
