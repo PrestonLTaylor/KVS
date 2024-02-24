@@ -22,7 +22,6 @@ public sealed class KeyValueRepositoryTests
         Assert.That(success, Is.Not.Null);
 
         AssertRepositoryHasKeyValuePair(keyValueRepository, validKey, expectedValue);
-
     }
 
     [Test]
@@ -41,29 +40,33 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void RemoveByKey_ReturnsSuccess_WhenKeyIsPresent()
+    public void GetValueByKey_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent()
     {
         // Arrange
         const string presentKey = "present";
-        var keyValueRepository = new KeyValueRepository(new() { { presentKey, "" } });
+        const string expectedValue = "Value";
+        var keyValueRepository = new KeyValueRepository(new() { { presentKey, expectedValue } });
 
         // Act
-        var result = keyValueRepository.RemoveByKey(presentKey);
+        var result = keyValueRepository.GetValueByKey(presentKey);
 
         // Assert
-        var success = result.Value as Success?;
+        var success = result.Value as Success<string>?;
         Assert.That(success, Is.Not.Null);
+
+        var actualValue = success.Value.Value;
+        Assert.That(actualValue, Is.EqualTo(expectedValue));
     }
 
     [Test]
-    public void RemoveByKey_ReturnsNotFound_WhenKeyIsNotPresent()
+    public void GetValueByKey_ReturnsNotFound_WhenKeyIsNotPresent()
     {
         // Arrange
         const string notPresentKey = "notpresent";
         var keyValueRepository = new KeyValueRepository();
 
         // Act
-        var result = keyValueRepository.RemoveByKey(notPresentKey);
+        var result = keyValueRepository.GetValueByKey(notPresentKey);
 
         // Assert
         var notFound = result.Value as NotFound?;
@@ -97,6 +100,36 @@ public sealed class KeyValueRepositoryTests
 
         // Act
         var result = keyValueRepository.UpdateKeyValue(notPresentKey, "");
+
+        // Assert
+        var notFound = result.Value as NotFound?;
+        Assert.That(notFound, Is.Not.Null);
+    }
+
+    [Test]
+    public void RemoveByKey_ReturnsSuccess_WhenKeyIsPresent()
+    {
+        // Arrange
+        const string presentKey = "present";
+        var keyValueRepository = new KeyValueRepository(new() { { presentKey, "" } });
+
+        // Act
+        var result = keyValueRepository.RemoveByKey(presentKey);
+
+        // Assert
+        var success = result.Value as Success?;
+        Assert.That(success, Is.Not.Null);
+    }
+
+    [Test]
+    public void RemoveByKey_ReturnsNotFound_WhenKeyIsNotPresent()
+    {
+        // Arrange
+        const string notPresentKey = "notpresent";
+        var keyValueRepository = new KeyValueRepository();
+
+        // Act
+        var result = keyValueRepository.RemoveByKey(notPresentKey);
 
         // Assert
         var notFound = result.Value as NotFound?;

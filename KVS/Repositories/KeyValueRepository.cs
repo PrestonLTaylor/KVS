@@ -19,6 +19,16 @@ public sealed class KeyValueRepository : IKeyValueRepository
         return new AlreadyPresentError();
     }
 
+    public OneOf<Success<string>, NotFound> GetValueByKey(string key)
+    {
+        if (keyValueCache.TryGetValue(key, out var value))
+        {
+            return new Success<string>(value);
+        }
+
+        return new NotFound();
+    }
+
     public OneOf<Success, NotFound> RemoveByKey(string key)
     {
         if (keyValueCache.Remove(key))
