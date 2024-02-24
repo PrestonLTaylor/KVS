@@ -29,6 +29,17 @@ public sealed class KeyValueRepository : IKeyValueRepository
         return new NotFound();  
     }
 
+    public OneOf<Success, NotFound> UpdateKeyValue(string key, string newValue)
+    {
+        if (keyValueCache.ContainsKey(key))
+        {
+            keyValueCache[key] = newValue;
+            return new Success();
+        }
+
+        return new NotFound();
+    }
+
     private readonly Dictionary<string, string> keyValueCache = [];
     public IReadOnlyDictionary<string, string> KeyValueCache
     {

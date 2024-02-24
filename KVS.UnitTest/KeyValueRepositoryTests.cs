@@ -21,9 +21,8 @@ public sealed class KeyValueRepositoryTests
         var success = result.Value as Success?;
         Assert.That(success, Is.Not.Null);
 
-        var hasKey = keyValueRepository.KeyValueCache.ContainsKey(validKey);
-        Assert.That(hasKey, Is.True);
-        Assert.That(keyValueRepository.KeyValueCache[validKey], Is.EqualTo(expectedValue));
+        AssertRepositoryHasKeyValuePair(keyValueRepository, validKey, expectedValue);
+
     }
 
     [Test]
@@ -69,5 +68,45 @@ public sealed class KeyValueRepositoryTests
         // Assert
         var notFound = result.Value as NotFound?;
         Assert.That(notFound, Is.Not.Null);
+    }
+
+    [Test]
+    public void UpdateKeyValue_ReturnsSuccess_WhenKeyIsPresent()
+    {
+        // Arrange
+        const string presentKey = "present";
+        const string expectedValue = "expected";
+        var keyValueRepository = new KeyValueRepository(new() { { presentKey, "" } });
+
+        // Act
+        var result = keyValueRepository.UpdateKeyValue(presentKey, expectedValue);
+
+        // Assert
+        var success = result.Value as Success?;
+        Assert.That(success, Is.Not.Null);
+
+        AssertRepositoryHasKeyValuePair(keyValueRepository, presentKey, expectedValue);
+    }
+
+    [Test]
+    public void UpdateKeyValue_ReturnsNotFound_WhenKeyIsNotPresent()
+    {
+        // Arrange
+        const string notPresentKey = "notpresent";
+        var keyValueRepository = new KeyValueRepository();
+
+        // Act
+        var result = keyValueRepository.UpdateKeyValue(notPresentKey, "");
+
+        // Assert
+        var notFound = result.Value as NotFound?;
+        Assert.That(notFound, Is.Not.Null);
+    }
+
+    static private void AssertRepositoryHasKeyValuePair(KeyValueRepository repo, string key, string expectedValue)
+    {
+        var hasKey = repo.KeyValueCache.ContainsKey(key);
+        Assert.That(hasKey, Is.True);
+        Assert.That(repo.KeyValueCache[key], Is.EqualTo(expectedValue));
     }
 }
