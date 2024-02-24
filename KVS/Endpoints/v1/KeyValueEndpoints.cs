@@ -1,6 +1,9 @@
 ﻿using KVS.Repositories;
+using Microsoft.AspNetCore.Mvc;
 
 namespace KVS.Endpoints.v1;
+
+public record struct CreateKeyValueRequest(string NewKey, string Value);
 
 public static class KeyValueEndpoints
 {
@@ -30,5 +33,25 @@ public static class KeyValueEndpoints
         });
 
         return app;
+    }
+
+    static public IResult HandleCreateKeyValueRequest(ILogger<CreateKeyValueRequest> logger, IKeyValueRepository repo, [FromBody] CreateKeyValueRequest request)
+    {
+        logger.LogInformation("Creation of key '{Key}' with the value '{Value}' was requested", request.NewKey, request.Value);
+
+        var result = repo.AddKeyValue(request.NewKey, request.Value);
+
+        return result.Match(
+            success =>
+            {
+                logger.LogInformation("Key '{NewKey}' was successfully created with an initial value of '{InitialValue}'", request.NewKey, request.Value);
+                return Results.Created("/", request.Value);
+            },
+            alreadyExists =>
+            {
+                logger.LogInformation("Creation of key '{Key}' failed as the key already exists", request.NewKey);
+                return Results.Conflict($"The key '{request.NewKey}' already exists.");
+            }
+        );
     }
 }
