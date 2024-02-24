@@ -7,6 +7,8 @@ public record struct CreateKeyValueRequest(string NewKey, string Value);
 
 public record struct ReadValueRequest(string Key);
 
+public record struct UpdateKeyValueRequest(string Key, string NewValue);
+
 public static class KeyValueEndpoints
 {
     static public WebApplication MapKeyValueV1Endpoints(this WebApplication app)
@@ -68,6 +70,26 @@ public static class KeyValueEndpoints
             {
                 logger.LogInformation("The key '{Key}' was found with the value of '{Value}'", request.Key, success.Value);
                 return Results.Ok(success.Value);
+            },
+            notFound =>
+            {
+                logger.LogInformation("The key '{Key}' was not found", request.Key);
+                return Results.NotFound($"The key '{request.Key}' was not found.");
+            }
+        );
+    }
+
+    static public IResult HandleUpdateKeyValueRequest(ILogger<UpdateKeyValueRequest> logger, IKeyValueRepository repo, [FromBody] UpdateKeyValueRequest request)
+    {
+        logger.LogInformation("The value of key '{Key}' was requested to be updated with the value '{NewValue}'", request.Key, request.NewValue);
+
+        var result = repo.UpdateKeyValue(request.Key, request.NewValue);
+
+        return result.Match(
+            success =>
+            {
+                logger.LogInformation("The key '{Key}' was updated to the value '{Value}'", request.Key, request.NewValue);
+                return Results.NoContent();
             },
             notFound =>
             {

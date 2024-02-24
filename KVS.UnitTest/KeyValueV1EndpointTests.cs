@@ -58,7 +58,7 @@ public sealed class KeyValueV1EndpointTests
         var created = result as Conflict<string>;
         Assert.That(created, Is.Not.Null);
     }
-    
+
     [Test]
     public void HandleReadValueRequest_ReturnsOk_WhenKeyIsPresent()
     {
@@ -103,6 +103,49 @@ public sealed class KeyValueV1EndpointTests
         Assert.That(notFound, Is.Not.Null);
     }
 
-    static private NullLogger<CreateKeyValueRequest> CreateLogger { get; } = new NullLogger<CreateKeyValueRequest>();
-    static private NullLogger<ReadValueRequest> ReadLogger { get; } = new NullLogger<ReadValueRequest>();
+    [Test]
+    public void HandleUpdateKeyValueRequest_ReturnsNoContent_WhenKeyIsPresent()
+    {
+        // Arrange
+        const string presentKey = "present";
+        var request = new UpdateKeyValueRequest(presentKey, "");
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        keyValueRepoMock
+            .Setup(m => m.UpdateKeyValue(presentKey, It.IsAny<string>()))
+            .Returns(new Success());
+
+        // Act
+        var result = KeyValueEndpoints.HandleUpdateKeyValueRequest(UpdateLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var noContent = result as NoContent;
+        Assert.That(noContent, Is.Not.Null);
+    }
+
+    [Test]
+    public void HandleUpdateKeyValueRequest_ReturnsNotFound_WhenKeyIsNotPresent()
+    {
+        // Arrange
+        const string notPresentKey = "notpresent";
+        var request = new UpdateKeyValueRequest(notPresentKey, "");
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        keyValueRepoMock
+            .Setup(m => m.UpdateKeyValue(notPresentKey, It.IsAny<string>()))
+            .Returns(new OneOf.Types.NotFound());
+
+        // Act
+        var result = KeyValueEndpoints.HandleUpdateKeyValueRequest(UpdateLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var notFound = result as NotFound<string>;
+        Assert.That(notFound, Is.Not.Null);
+    }
+
+    static private NullLogger<CreateKeyValueRequest> CreateLogger { get; } = new();
+    static private NullLogger<ReadValueRequest> ReadLogger { get; } = new();
+    static private NullLogger<UpdateKeyValueRequest> UpdateLogger { get; } = new();
 }
