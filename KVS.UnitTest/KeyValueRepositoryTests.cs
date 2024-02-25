@@ -1,5 +1,9 @@
+using KVS.Data;
 using KVS.Errors;
 using KVS.Repositories;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using OneOf.Types;
 
 namespace KVS.UnitTests;
@@ -12,7 +16,7 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string validKey = "Valid";
         const string expectedValue = "Value";
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache());
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
 
         // Act
         var result = keyValueRepository.AddKeyValue(validKey, expectedValue);
@@ -30,7 +34,7 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string duplicateKey = "Duplicate";
         var keyValueCache = new KeyValueCache(new() { { duplicateKey, "" } });
-        var keyValueRepository = new KeyValueRepository(keyValueCache);
+        var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
         // Act
         var result = keyValueRepository.AddKeyValue(duplicateKey, "");
@@ -47,7 +51,7 @@ public sealed class KeyValueRepositoryTests
         const string presentKey = "present";
         const string expectedValue = "Value";
         var keyValueCache = new KeyValueCache(new() { { presentKey, expectedValue } });
-        var keyValueRepository = new KeyValueRepository(keyValueCache);
+        var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
         // Act
         var result = keyValueRepository.GetValueByKey(presentKey);
@@ -65,7 +69,7 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache());
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
 
         // Act
         var result = keyValueRepository.GetValueByKey(notPresentKey);
@@ -82,7 +86,7 @@ public sealed class KeyValueRepositoryTests
         const string presentKey = "present";
         const string expectedValue = "expected";
         var keyValueCache = new KeyValueCache(new() { { presentKey, "" } });
-        var keyValueRepository = new KeyValueRepository(keyValueCache);
+        var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
         // Act
         var result = keyValueRepository.UpdateKeyValue(presentKey, expectedValue);
@@ -99,7 +103,7 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache());
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
 
         // Act
         var result = keyValueRepository.UpdateKeyValue(notPresentKey, "");
@@ -115,7 +119,7 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string presentKey = "present";
         var keyValueCache = new KeyValueCache(new() { { presentKey, "" } });
-        var keyValueRepository = new KeyValueRepository(keyValueCache);
+        var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
         // Act
         var result = keyValueRepository.RemoveByKey(presentKey);
@@ -130,7 +134,7 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache());
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
 
         // Act
         var result = keyValueRepository.RemoveByKey(notPresentKey);
@@ -145,5 +149,15 @@ public sealed class KeyValueRepositoryTests
         var hasKey = repo.KeyValueCache.ContainsKey(key);
         Assert.That(hasKey, Is.True);
         Assert.That(repo.KeyValueCache[key], Is.EqualTo(expectedValue));
+    }
+
+    static private DatabaseContext EmptyDb
+    {
+        get
+        {
+            var logger = NullLogger<DatabaseContext>.Instance;
+            var configuration = new Mock<IConfiguration>().Object;
+            return new Mock<DatabaseContext>(logger, configuration).Object;
+        }
     }
 }

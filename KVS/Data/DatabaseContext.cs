@@ -2,7 +2,7 @@
 
 namespace KVS.Data;
 
-public sealed class DatabaseContext(ILogger<DatabaseContext> _logger, IConfiguration _configuration) : DbContext
+public class DatabaseContext(ILogger<DatabaseContext> _logger, IConfiguration _configuration) : DbContext
 {
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {

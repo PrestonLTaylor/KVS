@@ -1,10 +1,11 @@
-﻿using KVS.Errors;
+﻿using KVS.Data;
+using KVS.Errors;
 using OneOf;
 using OneOf.Types;
 
 namespace KVS.Repositories;
 
-public sealed class KeyValueRepository(IKeyValueCache _cache) : IKeyValueRepository
+public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _db) : IKeyValueRepository
 {
     public OneOf<Success, AlreadyPresentError> AddKeyValue(string key, string value)
     {
