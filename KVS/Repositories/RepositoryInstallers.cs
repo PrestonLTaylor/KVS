@@ -4,7 +4,7 @@ public static class RepositoryInstallers
 {
     static public IServiceCollection AddRepositories(this IServiceCollection services)
     {
-        services.AddTransient<IKeyValueRepository, KeyValueRepository>();
+        services.AddSingleton<IKeyValueRepository, KeyValueRepository>();
 
         return services;
     }
