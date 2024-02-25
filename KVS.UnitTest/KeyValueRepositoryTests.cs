@@ -12,7 +12,7 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string validKey = "Valid";
         const string expectedValue = "Value";
-        var keyValueRepository = new KeyValueRepository();
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache());
 
         // Act
         var result = keyValueRepository.AddKeyValue(validKey, expectedValue);
@@ -29,7 +29,8 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string duplicateKey = "Duplicate";
-        var keyValueRepository = new KeyValueRepository(new() { { duplicateKey, "" } });
+        var keyValueCache = new KeyValueCache(new() { { duplicateKey, "" } });
+        var keyValueRepository = new KeyValueRepository(keyValueCache);
 
         // Act
         var result = keyValueRepository.AddKeyValue(duplicateKey, "");
@@ -45,7 +46,8 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string presentKey = "present";
         const string expectedValue = "Value";
-        var keyValueRepository = new KeyValueRepository(new() { { presentKey, expectedValue } });
+        var keyValueCache = new KeyValueCache(new() { { presentKey, expectedValue } });
+        var keyValueRepository = new KeyValueRepository(keyValueCache);
 
         // Act
         var result = keyValueRepository.GetValueByKey(presentKey);
@@ -63,7 +65,7 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository();
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache());
 
         // Act
         var result = keyValueRepository.GetValueByKey(notPresentKey);
@@ -79,7 +81,8 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string presentKey = "present";
         const string expectedValue = "expected";
-        var keyValueRepository = new KeyValueRepository(new() { { presentKey, "" } });
+        var keyValueCache = new KeyValueCache(new() { { presentKey, "" } });
+        var keyValueRepository = new KeyValueRepository(keyValueCache);
 
         // Act
         var result = keyValueRepository.UpdateKeyValue(presentKey, expectedValue);
@@ -96,7 +99,7 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository();
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache());
 
         // Act
         var result = keyValueRepository.UpdateKeyValue(notPresentKey, "");
@@ -111,7 +114,8 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string presentKey = "present";
-        var keyValueRepository = new KeyValueRepository(new() { { presentKey, "" } });
+        var keyValueCache = new KeyValueCache(new() { { presentKey, "" } });
+        var keyValueRepository = new KeyValueRepository(keyValueCache);
 
         // Act
         var result = keyValueRepository.RemoveByKey(presentKey);
@@ -126,7 +130,7 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository();
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache());
 
         // Act
         var result = keyValueRepository.RemoveByKey(notPresentKey);

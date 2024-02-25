@@ -4,14 +4,11 @@ using OneOf.Types;
 
 namespace KVS.Repositories;
 
-public sealed class KeyValueRepository : IKeyValueRepository
+public sealed class KeyValueRepository(IKeyValueCache _cache) : IKeyValueRepository
 {
-    public KeyValueRepository() { }
-    public KeyValueRepository(Dictionary<string, string> initialKeyValues) => keyValueCache = initialKeyValues.ToDictionary();
-
     public OneOf<Success, AlreadyPresentError> AddKeyValue(string key, string value)
     {
-        if (keyValueCache.TryAdd(key, value))
+        if (_cache.TryAdd(key, value))
         {
             return new Success();
         }
@@ -21,7 +18,7 @@ public sealed class KeyValueRepository : IKeyValueRepository
 
     public OneOf<Success<string>, NotFound> GetValueByKey(string key)
     {
-        if (keyValueCache.TryGetValue(key, out var value))
+        if (_cache.TryGetValue(key, out var value))
         {
             return new Success<string>(value);
         }
@@ -31,7 +28,7 @@ public sealed class KeyValueRepository : IKeyValueRepository
 
     public OneOf<Success, NotFound> RemoveByKey(string key)
     {
-        if (keyValueCache.Remove(key))
+        if (_cache.Remove(key))
         {
             return new Success();
         }
@@ -41,18 +38,14 @@ public sealed class KeyValueRepository : IKeyValueRepository
 
     public OneOf<Success, NotFound> UpdateKeyValue(string key, string newValue)
     {
-        if (keyValueCache.ContainsKey(key))
+        if (_cache.ContainsKey(key))
         {
-            keyValueCache[key] = newValue;
+            _cache[key] = newValue;
             return new Success();
         }
 
         return new NotFound();
     }
 
-    private readonly Dictionary<string, string> keyValueCache = [];
-    public IReadOnlyDictionary<string, string> KeyValueCache
-    {
-        get => keyValueCache.AsReadOnly();
-    }
+    public IReadOnlyDictionary<string, string> KeyValueCache { get => _cache.KeyValues; }
 }
