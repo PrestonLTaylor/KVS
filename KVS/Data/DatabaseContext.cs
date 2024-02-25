@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using KVS.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace KVS.Data;
 
@@ -36,4 +37,5 @@ public class DatabaseContext(ILogger<DatabaseContext> _logger, IConfiguration _c
     }
 
     const string CONNECTION_STRING_VARIABLE = "POSTGRESQLCONNSTR_DefaultConnection";
+    public virtual DbSet<KeyValueModel> KeyValues { get; set; }
 }
