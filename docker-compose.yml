@@ -1,0 +1,25 @@
+version: '3.4'
+
+services:
+  kvs:
+    container_name: kvs-container
+    image: ${DOCKER_REGISTRY-}kvs
+    build:
+      context: .
+      dockerfile: KVS/Dockerfile
+    ports:
+      - 80:80
+      - 443:443 
+  postgres:
+    container_name: postgres-container
+    image: postgres
+    environment:
+      # TODO: Use the POSTGRES_PASSWORD_FILE environment variable so that the password isn't commited
+      POSTGRES_PASSWORD: temppw
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - db-data:/var/lib/postgres/data
+
+volumes:
+  db-data:
+      
