@@ -1,4 +1,5 @@
-﻿using KVS.Repositories;
+﻿using Asp.Versioning;
+using KVS.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KVS.Endpoints.v1;
@@ -16,31 +17,24 @@ public static class KeyValueEndpoints
     static public WebApplication MapKeyValueV1Endpoints(this WebApplication app)
     {
         var kvApi = app.NewVersionedApi();
-        var v1 = kvApi.MapGroup("/v1").HasApiVersion(1.0);
+        var v1 = kvApi
+            .MapGroup("/v{version:apiVersion}")
+            .HasApiVersion(new ApiVersion(1, 0))
+            .ReportApiVersions();
 
-        v1.MapPost("/", (IKeyValueRepository repo) =>
-        {
-            return Results.Created();
-        });
+        v1.MapPost("/", HandleCreateKeyValueRequest);
 
-        v1.MapGet("/", (IKeyValueRepository repo) =>
-        {
-            return Results.Ok();
-        });
+        v1.MapGet("/{key}", HandleReadValueRequest);
 
-        v1.MapPut("/", (IKeyValueRepository repo) =>
-        {
-            return Results.NoContent();
-        });
+        v1.MapPut("/", HandleUpdateKeyValueRequest);
 
-        v1.MapDelete("/", (IKeyValueRepository repo) =>
-        {
-            return Results.NoContent();
-        });
+        v1.MapDelete("/", HandleRemoveKeyRequest);
 
         return app;
     }
 
+    [ProducesResponseType(201)]
+    [ProducesResponseType(409)]
     static public IResult HandleCreateKeyValueRequest(ILogger<CreateKeyValueRequest> logger, IKeyValueRepository repo, [FromBody] CreateKeyValueRequest request)
     {
         logger.LogInformation("Creation of key '{Key}' with the value '{Value}' was requested", request.NewKey, request.Value);
@@ -61,6 +55,8 @@ public static class KeyValueEndpoints
         );
     }
 
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     static public IResult HandleReadValueRequest(ILogger<ReadValueRequest> logger, IKeyValueRepository repo, [FromRoute] string key)
     {
         logger.LogInformation("The value of Key '{Key}' was requested", key);
@@ -81,6 +77,8 @@ public static class KeyValueEndpoints
         );
     }
 
+    [ProducesResponseType(204)]
+    [ProducesResponseType(404)]
     static public IResult HandleUpdateKeyValueRequest(ILogger<UpdateKeyValueRequest> logger, IKeyValueRepository repo, [FromBody] UpdateKeyValueRequest request)
     {
         logger.LogInformation("The value of key '{Key}' was requested to be updated with the value '{NewValue}'", request.Key, request.NewValue);
@@ -101,6 +99,8 @@ public static class KeyValueEndpoints
         );
     }
 
+    [ProducesResponseType(204)]
+    [ProducesResponseType(404)]
     static public IResult HandleRemoveKeyRequest(ILogger<RemoveKeyRequest> logger, IKeyValueRepository repo, [FromBody] RemoveKeyRequest request)
     {
         logger.LogInformation("The value of key '{Key}' was requested to be deleted", request.Key);
