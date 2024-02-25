@@ -5,7 +5,7 @@ namespace KVS.Endpoints.v1;
 
 public record struct CreateKeyValueRequest(string NewKey, string Value);
 
-public record struct ReadValueRequest(string Key);
+public record struct ReadValueRequest();
 
 public record struct UpdateKeyValueRequest(string Key, string NewValue);
 
@@ -61,22 +61,22 @@ public static class KeyValueEndpoints
         );
     }
 
-    static public IResult HandleReadValueRequest(ILogger<ReadValueRequest> logger, IKeyValueRepository repo, [FromBody] ReadValueRequest request)
+    static public IResult HandleReadValueRequest(ILogger<ReadValueRequest> logger, IKeyValueRepository repo, [FromRoute] string key)
     {
-        logger.LogInformation("The value of Key '{Key}' was requested", request.Key);
+        logger.LogInformation("The value of Key '{Key}' was requested", key);
 
-        var result = repo.GetValueByKey(request.Key);
+        var result = repo.GetValueByKey(key);
 
         return result.Match(
             success =>
             {
-                logger.LogInformation("The key '{Key}' was found with the value of '{Value}'", request.Key, success.Value);
+                logger.LogInformation("The key '{Key}' was found with the value of '{Value}'", key, success.Value);
                 return Results.Ok(success.Value);
             },
             notFound =>
             {
-                logger.LogInformation("The key '{Key}' was not found", request.Key);
-                return Results.NotFound($"The key '{request.Key}' was not found.");
+                logger.LogInformation("The key '{Key}' was not found", key);
+                return Results.NotFound($"The key '{key}' was not found.");
             }
         );
     }

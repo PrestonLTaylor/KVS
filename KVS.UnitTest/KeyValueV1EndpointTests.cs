@@ -65,7 +65,6 @@ public sealed class KeyValueV1EndpointTests
         // Arrange
         const string presentKey = "present";
         const string expectedValue = "value";
-        var request = new ReadValueRequest(presentKey);
 
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
@@ -74,7 +73,7 @@ public sealed class KeyValueV1EndpointTests
             .Returns(new Success<string>(expectedValue));
 
         // Act
-        var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, request);
+        var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, presentKey);
 
         // Assert
         var ok = result as Ok<string>;
@@ -87,7 +86,6 @@ public sealed class KeyValueV1EndpointTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var request = new ReadValueRequest(notPresentKey);
 
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
@@ -96,7 +94,7 @@ public sealed class KeyValueV1EndpointTests
             .Returns(new OneOf.Types.NotFound());
 
         // Act
-        var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, request);
+        var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, notPresentKey);
 
         // Assert
         var notFound = result as NotFound<string>;
