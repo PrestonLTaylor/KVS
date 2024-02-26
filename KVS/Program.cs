@@ -28,6 +28,8 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    await app.EnsureDatabaseIsUpToDateAsync();
+
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
