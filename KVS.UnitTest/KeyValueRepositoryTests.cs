@@ -1,6 +1,8 @@
 using KVS.Data;
 using KVS.Errors;
+using KVS.Models;
 using KVS.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -16,7 +18,10 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string validKey = "Valid";
         const string expectedValue = "Value";
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
+
+        var dbSetMock = CreateDbSetMock(Enumerable.Empty<KeyValueModel>().AsQueryable());
+        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
         var result = keyValueRepository.AddKeyValue(validKey, expectedValue);
@@ -151,13 +156,38 @@ public sealed class KeyValueRepositoryTests
         Assert.That(repo.KeyValueCache[key], Is.EqualTo(expectedValue));
     }
 
+    static private Mock<DbSet<T>> CreateDbSetMock<T>(IQueryable<T> setData) where T : class
+    {
+        var mockSet = new Mock<DbSet<T>>();
+
+        // Sets up the queryable properties so extension methods will work on the DbSet, https://learn.microsoft.com/en-us/ef/ef6/fundamentals/testing/mocking?redirectedfrom=MSDN
+        mockSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(setData.Provider);
+        mockSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(setData.Expression);
+        mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(setData.ElementType);
+        mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => setData.GetEnumerator());
+
+        return mockSet;
+    }
+
+    static private Mock<DatabaseContext> CreateDatabaseContextMock(DbSet<KeyValueModel> kvDbSet)
+    {
+        var mock = CreateEmptyDatabaseContextMock();
+        mock.Setup(m => m.KeyValues).Returns(kvDbSet);
+        return mock;
+    }
+
+    static private Mock<DatabaseContext> CreateEmptyDatabaseContextMock()
+    {
+        var logger = NullLogger<DatabaseContext>.Instance;
+        var configuration = new Mock<IConfiguration>().Object;
+        return new Mock<DatabaseContext>(logger, configuration);
+    }
+
     static private DatabaseContext EmptyDb
     {
         get
         {
-            var logger = NullLogger<DatabaseContext>.Instance;
-            var configuration = new Mock<IConfiguration>().Object;
-            return new Mock<DatabaseContext>(logger, configuration).Object;
+            return CreateEmptyDatabaseContextMock().Object;
         }
     }
 }

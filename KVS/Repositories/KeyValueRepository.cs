@@ -5,16 +5,29 @@ using OneOf.Types;
 
 namespace KVS.Repositories;
 
+// FIXME: Validation for strings (no nulls)
 public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _db) : IKeyValueRepository
 {
     public OneOf<Success, AlreadyPresentError> AddKeyValue(string key, string value)
     {
-        if (_cache.TryAdd(key, value))
+        if (IsKeyInCache(key))
         {
-            return new Success();
+            return new AlreadyPresentError();
         }
 
-        return new AlreadyPresentError();
+        // FIXME: This shouldn't ever return false, but we should probably handle that case
+        _cache.TryAdd(key, value);
+        AddKeyValueToPersistance(key, value);
+
+        return new Success();
+    }
+
+    private void AddKeyValueToPersistance(string key, string value)
+    {
+        // FIXME: Check if the key value was actually added and return an error
+        // FIXME: Convert functions to async functions
+        _db.KeyValues.Add(new() { Key = key, Value = value });
+        _db.SaveChanges();
     }
 
     public OneOf<Success<string>, NotFound> GetValueByKey(string key)
@@ -47,6 +60,8 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _d
 
         return new NotFound();
     }
+
+    private bool IsKeyInCache(string key) => _cache.ContainsKey(key);
 
     public IReadOnlyDictionary<string, string> KeyValueCache { get => _cache.KeyValues; }
 }
