@@ -2,6 +2,7 @@
 using KVS.Errors;
 using OneOf;
 using OneOf.Types;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KVS.Repositories;
 
@@ -36,8 +37,27 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _d
         {
             return new Success<string>(value);
         }
+        // FIXME: We probably want a cache "dirty" flag so we don't always try to read from the database if a key doesn't exist
+        if (TryReadKeyValueFromPersistance(key, out value))
+        {
+            return new Success<string>(value);
+        }
 
         return new NotFound();
+    }
+
+    private bool TryReadKeyValueFromPersistance(string key, [MaybeNullWhen(false)] out string value)
+    {
+        var kv = _db.KeyValues.FirstOrDefault(kv => kv.Key == key);
+        if (kv is null)
+        {
+            value = null;
+            return false;
+        }
+
+        _cache.TryAdd(key, kv.Value);
+        value = kv.Value;
+        return true;
     }
 
     public OneOf<Success, NotFound> RemoveByKey(string key)

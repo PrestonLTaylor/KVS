@@ -21,6 +21,7 @@ public sealed class KeyValueRepositoryTests
 
         var dbSetMock = CreateDbSetMock(Enumerable.Empty<KeyValueModel>().AsQueryable());
         var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+
         var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
@@ -50,7 +51,7 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void GetValueByKey_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent()
+    public void GetValueByKey_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent_InTheCache()
     {
         // Arrange
         const string presentKey = "present";
@@ -70,11 +71,44 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
+    public void GetValueByKey_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent_InTheDatabase()
+    {
+        // Arrange
+        const string presentKey = "present";
+        const string expectedValue = "Value";
+
+        var keyValueCache = new KeyValueCache();
+
+        var databaseData = new List<KeyValueModel>()
+        {
+            new() { Key = presentKey, Value = expectedValue }
+        };
+        var dbSetMock = CreateDbSetMock(databaseData.AsQueryable());
+        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+
+        var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
+
+        // Act
+        var result = keyValueRepository.GetValueByKey(presentKey);
+
+        // Assert
+        var success = result.Value as Success<string>?;
+        Assert.That(success, Is.Not.Null);
+
+        var actualValue = success.Value.Value;
+        Assert.That(actualValue, Is.EqualTo(expectedValue));
+    }
+
+    [Test]
     public void GetValueByKey_ReturnsNotFound_WhenKeyIsNotPresent()
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
+
+        var dbSetMock = CreateDbSetMock(Enumerable.Empty<KeyValueModel>().AsQueryable());
+        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
         var result = keyValueRepository.GetValueByKey(notPresentKey);
