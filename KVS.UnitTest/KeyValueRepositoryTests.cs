@@ -124,8 +124,17 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string presentKey = "present";
         const string expectedValue = "expected";
+
         var keyValueCache = new KeyValueCache(new() { { presentKey, "" } });
-        var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
+
+        var databaseData = new List<KeyValueModel>()
+        {
+            new() { Key = presentKey, Value = "" }
+        };
+        var dbSetMock = CreateDbSetMock(databaseData.AsQueryable());
+        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+
+        var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
 
         // Act
         var result = keyValueRepository.UpdateKeyValue(presentKey, expectedValue);
@@ -142,7 +151,11 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
+
+        var dbSetMock = CreateDbSetMock(Enumerable.Empty<KeyValueModel>().AsQueryable());
+        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
         var result = keyValueRepository.UpdateKeyValue(notPresentKey, "");

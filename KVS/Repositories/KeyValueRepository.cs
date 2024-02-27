@@ -88,13 +88,27 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _d
 
     public OneOf<Success, NotFound> UpdateKeyValue(string key, string newValue)
     {
-        if (_cache.ContainsKey(key))
+        if (!IsKeyInCache(key))
         {
-            _cache[key] = newValue;
-            return new Success();
+            return new NotFound();
         }
 
-        return new NotFound();
+        _cache[key] = newValue;
+        UpdateKeyValueInPersistance(key, newValue);
+
+        return new Success();
+    }
+
+    private void UpdateKeyValueInPersistance(string key, string newValue)
+    {
+        var kv = _db.KeyValues.FirstOrDefault(kv => kv.Key == key);
+        if (kv is null)
+        {
+            return;
+        }
+
+        kv.Value = newValue;
+        _db.SaveChanges();
     }
 
     private bool IsKeyInCache(string key) => _cache.ContainsKey(key);
