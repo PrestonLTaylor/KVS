@@ -39,7 +39,7 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string duplicateKey = "Duplicate";
 
-        var keyValueCache = new KeyValueCache(new() { { duplicateKey, "" } });
+        var keyValueCache = new KeyValueCache(new Dictionary<string, string>() { { duplicateKey, "" } });
 
         var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
@@ -58,7 +58,7 @@ public sealed class KeyValueRepositoryTests
         const string presentKey = "present";
         const string expectedValue = "Value";
 
-        var keyValueCache = new KeyValueCache(new() { { presentKey, expectedValue } });
+        var keyValueCache = new KeyValueCache(new Dictionary<string, string>() { { presentKey, expectedValue } });
 
         var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
@@ -126,7 +126,7 @@ public sealed class KeyValueRepositoryTests
         const string presentKey = "present";
         const string expectedValue = "expected";
 
-        var keyValueCache = new KeyValueCache(new() { { presentKey, "" } });
+        var keyValueCache = new KeyValueCache(new Dictionary<string, string>() { { presentKey, "" } });
 
         var databaseMock = new Mock<IKeyValueDatabase>();
         databaseMock
@@ -168,7 +168,7 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string presentKey = "present";
 
-        var keyValueCache = new KeyValueCache(new() { { presentKey, "" } });
+        var keyValueCache = new KeyValueCache(new Dictionary<string, string>() { { presentKey, "" } });
 
         var databaseMock = new Mock<IKeyValueDatabase>();
         databaseMock
