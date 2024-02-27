@@ -6,6 +6,7 @@ public static class RepositoryInstallers
     {
         services.AddSingleton<IKeyValueCache, KeyValueCache>();
 
+        services.AddTransient<IKeyValueDatabase, KeyValueDatabase>();
         services.AddTransient<IKeyValueRepository, KeyValueRepository>();
 
         return services;

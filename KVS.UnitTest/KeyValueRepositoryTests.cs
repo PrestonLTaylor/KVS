@@ -1,10 +1,6 @@
-using KVS.Data;
 using KVS.Errors;
 using KVS.Models;
 using KVS.Repositories;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using OneOf.Types;
 
@@ -19,8 +15,10 @@ public sealed class KeyValueRepositoryTests
         const string validKey = "Valid";
         const string expectedValue = "Value";
 
-        var dbSetMock = CreateDbSetMock(Enumerable.Empty<KeyValueModel>().AsQueryable());
-        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+        var databaseMock = new Mock<IKeyValueDatabase>();
+        databaseMock
+            .Setup(m => m.Add(validKey, expectedValue))
+            .Verifiable();
 
         var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
@@ -32,6 +30,7 @@ public sealed class KeyValueRepositoryTests
         Assert.That(success, Is.Not.Null);
 
         AssertRepositoryHasKeyValuePair(keyValueRepository, validKey, expectedValue);
+        databaseMock.Verify();
     }
 
     [Test]
@@ -39,7 +38,9 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string duplicateKey = "Duplicate";
+
         var keyValueCache = new KeyValueCache(new() { { duplicateKey, "" } });
+
         var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
         // Act
@@ -56,7 +57,9 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string presentKey = "present";
         const string expectedValue = "Value";
+
         var keyValueCache = new KeyValueCache(new() { { presentKey, expectedValue } });
+
         var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
         // Act
@@ -75,18 +78,14 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string presentKey = "present";
-        const string expectedValue = "Value";
+        string? expectedValue = "Value";
 
-        var keyValueCache = new KeyValueCache();
+        var databaseMock = new Mock<IKeyValueDatabase>();
+        databaseMock
+            .Setup(m => m.TryGet(presentKey, out expectedValue))
+            .Returns(true);
 
-        var databaseData = new List<KeyValueModel>()
-        {
-            new() { Key = presentKey, Value = expectedValue }
-        };
-        var dbSetMock = CreateDbSetMock(databaseData.AsQueryable());
-        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
-
-        var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
         var result = keyValueRepository.GetValueByKey(presentKey);
@@ -105,8 +104,10 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string notPresentKey = "notpresent";
 
-        var dbSetMock = CreateDbSetMock(Enumerable.Empty<KeyValueModel>().AsQueryable());
-        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+        var databaseMock = new Mock<IKeyValueDatabase>();
+        databaseMock
+            .Setup(m => m.TryGet(notPresentKey, out It.Ref<string?>.IsAny))
+            .Returns(false);
 
         var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
@@ -127,12 +128,10 @@ public sealed class KeyValueRepositoryTests
 
         var keyValueCache = new KeyValueCache(new() { { presentKey, "" } });
 
-        var databaseData = new List<KeyValueModel>()
-        {
-            new() { Key = presentKey, Value = "" }
-        };
-        var dbSetMock = CreateDbSetMock(databaseData.AsQueryable());
-        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+        var databaseMock = new Mock<IKeyValueDatabase>();
+        databaseMock
+            .Setup(m => m.Update(presentKey, expectedValue))
+            .Verifiable();
 
         var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
 
@@ -144,6 +143,7 @@ public sealed class KeyValueRepositoryTests
         Assert.That(success, Is.Not.Null);
 
         AssertRepositoryHasKeyValuePair(keyValueRepository, presentKey, expectedValue);
+        databaseMock.Verify();
     }
 
     [Test]
@@ -152,10 +152,7 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string notPresentKey = "notpresent";
 
-        var dbSetMock = CreateDbSetMock(Enumerable.Empty<KeyValueModel>().AsQueryable());
-        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
-
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
 
         // Act
         var result = keyValueRepository.UpdateKeyValue(notPresentKey, "");
@@ -173,8 +170,10 @@ public sealed class KeyValueRepositoryTests
 
         var keyValueCache = new KeyValueCache(new() { { presentKey, "" } });
 
-        var dbSetMock = CreateDbSetMock(Enumerable.Empty<KeyValueModel>().AsQueryable());
-        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+        var databaseMock = new Mock<IKeyValueDatabase>();
+        databaseMock
+            .Setup(m => m.Delete(presentKey))
+            .Verifiable();
 
         var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
 
@@ -184,6 +183,8 @@ public sealed class KeyValueRepositoryTests
         // Assert
         var success = result.Value as Success?;
         Assert.That(success, Is.Not.Null);
+
+        databaseMock.Verify();
     }
 
     [Test]
@@ -208,38 +209,5 @@ public sealed class KeyValueRepositoryTests
         Assert.That(repo.KeyValueCache[key], Is.EqualTo(expectedValue));
     }
 
-    static private Mock<DbSet<T>> CreateDbSetMock<T>(IQueryable<T> setData) where T : class
-    {
-        var mockSet = new Mock<DbSet<T>>();
-
-        // Sets up the queryable properties so extension methods will work on the DbSet, https://learn.microsoft.com/en-us/ef/ef6/fundamentals/testing/mocking?redirectedfrom=MSDN
-        mockSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(setData.Provider);
-        mockSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(setData.Expression);
-        mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(setData.ElementType);
-        mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => setData.GetEnumerator());
-
-        return mockSet;
-    }
-
-    static private Mock<DatabaseContext> CreateDatabaseContextMock(DbSet<KeyValueModel> kvDbSet)
-    {
-        var mock = CreateEmptyDatabaseContextMock();
-        mock.Setup(m => m.KeyValues).Returns(kvDbSet);
-        return mock;
-    }
-
-    static private Mock<DatabaseContext> CreateEmptyDatabaseContextMock()
-    {
-        var logger = NullLogger<DatabaseContext>.Instance;
-        var configuration = new Mock<IConfiguration>().Object;
-        return new Mock<DatabaseContext>(logger, configuration);
-    }
-
-    static private DatabaseContext EmptyDb
-    {
-        get
-        {
-            return CreateEmptyDatabaseContextMock().Object;
-        }
-    }
+    static private IKeyValueDatabase EmptyDb => new Mock<IKeyValueDatabase>().Object;
 }

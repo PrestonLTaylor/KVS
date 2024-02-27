@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace KVS.Repositories;
 
 // FIXME: Validation for strings (no nulls)
-public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _db) : IKeyValueRepository
+public sealed class KeyValueRepository(IKeyValueCache _cache, IKeyValueDatabase _database) : IKeyValueRepository
 {
     public OneOf<Success, AlreadyPresentError> AddKeyValue(string key, string value)
     {
@@ -18,17 +18,9 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _d
 
         // FIXME: This shouldn't ever return false, but we should probably handle that case
         _cache.TryAdd(key, value);
-        AddKeyValueToPersistance(key, value);
+        _database.Add(key, value);
 
         return new Success();
-    }
-
-    private void AddKeyValueToPersistance(string key, string value)
-    {
-        // FIXME: Check if the key value was actually added and return an error
-        // FIXME: Convert functions to async functions
-        _db.KeyValues.Add(new() { Key = key, Value = value });
-        _db.SaveChanges();
     }
 
     public OneOf<Success<string>, NotFound> GetValueByKey(string key)
@@ -48,15 +40,12 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _d
 
     private bool TryReadKeyValueFromPersistance(string key, [MaybeNullWhen(false)] out string value)
     {
-        var kv = _db.KeyValues.FirstOrDefault(kv => kv.Key == key);
-        if (kv is null)
+        if (!_database.TryGet(key, out value))
         {
-            value = null;
             return false;
         }
 
-        _cache.TryAdd(key, kv.Value);
-        value = kv.Value;
+        _cache.TryAdd(key, value);
         return true;
     }
 
@@ -68,22 +57,9 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _d
         }
 
         _cache.Remove(key);
-        RemoveKeyValueFromPersistance(key);
+        _database.Delete(key);
 
         return new Success();
-    }
-
-    private void RemoveKeyValueFromPersistance(string key)
-    {
-        var toDelete = _db.KeyValues.FirstOrDefault(kv => kv.Key == key);
-        if (toDelete is null)
-        {
-            // FIXME: Return an error/handle this case
-            return;
-        }
-
-        _db.KeyValues.Remove(toDelete);
-        _db.SaveChanges();
     }
 
     public OneOf<Success, NotFound> UpdateKeyValue(string key, string newValue)
@@ -94,21 +70,9 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _d
         }
 
         _cache[key] = newValue;
-        UpdateKeyValueInPersistance(key, newValue);
+        _database.Update(key, newValue);
 
         return new Success();
-    }
-
-    private void UpdateKeyValueInPersistance(string key, string newValue)
-    {
-        var kv = _db.KeyValues.FirstOrDefault(kv => kv.Key == key);
-        if (kv is null)
-        {
-            return;
-        }
-
-        kv.Value = newValue;
-        _db.SaveChanges();
     }
 
     private bool IsKeyInCache(string key) => _cache.ContainsKey(key);
