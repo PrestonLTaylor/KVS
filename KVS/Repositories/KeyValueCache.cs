@@ -8,9 +8,9 @@ public sealed class KeyValueCache : IKeyValueCache
     public KeyValueCache() { }
     public KeyValueCache(Dictionary<string, string> initialKeyValues) => keyValues = initialKeyValues.ToDictionary();
 
-    public bool TryAdd(string key, string value)
+    public void Add(string key, string value)
     {
-        return keyValues.TryAdd(key, value);
+        keyValues.Add(key, value);
     }
 
     public bool TryGetValue(string key, [MaybeNullWhen(false)] out string value)

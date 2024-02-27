@@ -16,8 +16,7 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, IKeyValueDatabase 
             return new AlreadyPresentError();
         }
 
-        // FIXME: This shouldn't ever return false, but we should probably handle that case
-        _cache.TryAdd(key, value);
+        _cache.Add(key, value);
         _database.Add(key, value);
 
         return new Success();
@@ -45,7 +44,7 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, IKeyValueDatabase 
             return false;
         }
 
-        _cache.TryAdd(key, value);
+        _cache.Add(key, value);
         return true;
     }
 

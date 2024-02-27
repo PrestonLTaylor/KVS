@@ -4,7 +4,7 @@ namespace KVS.Repositories;
 
 public interface IKeyValueCache
 {
-    bool TryAdd(string key, string value);
+    void Add(string key, string value);
     bool TryGetValue(string key, [MaybeNullWhen(false)] out string value);
     bool Remove(string key);
     bool ContainsKey(string key);
