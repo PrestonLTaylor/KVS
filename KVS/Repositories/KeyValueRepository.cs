@@ -62,12 +62,28 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, DatabaseContext _d
 
     public OneOf<Success, NotFound> RemoveByKey(string key)
     {
-        if (_cache.Remove(key))
+        if (!IsKeyInCache(key))
         {
-            return new Success();
+            return new NotFound();
         }
 
-        return new NotFound();  
+        _cache.Remove(key);
+        RemoveKeyValueFromPersistance(key);
+
+        return new Success();
+    }
+
+    private void RemoveKeyValueFromPersistance(string key)
+    {
+        var toDelete = _db.KeyValues.FirstOrDefault(kv => kv.Key == key);
+        if (toDelete is null)
+        {
+            // FIXME: Return an error/handle this case
+            return;
+        }
+
+        _db.KeyValues.Remove(toDelete);
+        _db.SaveChanges();
     }
 
     public OneOf<Success, NotFound> UpdateKeyValue(string key, string newValue)

@@ -157,8 +157,13 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string presentKey = "present";
+
         var keyValueCache = new KeyValueCache(new() { { presentKey, "" } });
-        var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
+
+        var dbSetMock = CreateDbSetMock(Enumerable.Empty<KeyValueModel>().AsQueryable());
+        var databaseMock = CreateDatabaseContextMock(dbSetMock.Object);
+
+        var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
 
         // Act
         var result = keyValueRepository.RemoveByKey(presentKey);
