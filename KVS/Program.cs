@@ -6,7 +6,10 @@ using KVS.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SupportNonNullableReferenceTypes();
+});
 
 builder.Services.AddDbContext<DatabaseContext>();
 
