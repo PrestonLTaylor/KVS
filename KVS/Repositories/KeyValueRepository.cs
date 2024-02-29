@@ -1,27 +1,33 @@
 ﻿using KVS.Errors;
 using OneOf;
 using OneOf.Types;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KVS.Repositories;
 
-public sealed class KeyValueRepository : IKeyValueRepository
+public sealed class KeyValueRepository(IKeyValueCache _cache, IKeyValueDatabase _database) : IKeyValueRepository
 {
-    public KeyValueRepository() { }
-    public KeyValueRepository(Dictionary<string, string> initialKeyValues) => keyValueCache = initialKeyValues.ToDictionary();
-
     public OneOf<Success, AlreadyPresentError> AddKeyValue(string key, string value)
     {
-        if (keyValueCache.TryAdd(key, value))
+        if (IsKeyInCache(key))
         {
-            return new Success();
+            return new AlreadyPresentError();
         }
 
-        return new AlreadyPresentError();
+        _cache.Add(key, value);
+        _database.Add(key, value);
+
+        return new Success();
     }
 
     public OneOf<Success<string>, NotFound> GetValueByKey(string key)
     {
-        if (keyValueCache.TryGetValue(key, out var value))
+        if (_cache.TryGetValue(key, out var value))
+        {
+            return new Success<string>(value);
+        }
+        // FIXME: We probably want a cache "dirty" flag so we don't always try to read from the database if a key doesn't exist
+        if (TryReadKeyValueFromPersistance(key, out value))
         {
             return new Success<string>(value);
         }
@@ -29,30 +35,44 @@ public sealed class KeyValueRepository : IKeyValueRepository
         return new NotFound();
     }
 
-    public OneOf<Success, NotFound> RemoveByKey(string key)
+    private bool TryReadKeyValueFromPersistance(string key, [MaybeNullWhen(false)] out string value)
     {
-        if (keyValueCache.Remove(key))
+        if (!_database.TryGet(key, out value))
         {
-            return new Success();
+            return false;
         }
 
-        return new NotFound();  
+        _cache.Add(key, value);
+        return true;
+    }
+
+    public OneOf<Success, NotFound> RemoveByKey(string key)
+    {
+        if (!IsKeyInCache(key))
+        {
+            return new NotFound();
+        }
+
+        _cache.Remove(key);
+        _database.Delete(key);
+
+        return new Success();
     }
 
     public OneOf<Success, NotFound> UpdateKeyValue(string key, string newValue)
     {
-        if (keyValueCache.ContainsKey(key))
+        if (!IsKeyInCache(key))
         {
-            keyValueCache[key] = newValue;
-            return new Success();
+            return new NotFound();
         }
 
-        return new NotFound();
+        _cache[key] = newValue;
+        _database.Update(key, newValue);
+
+        return new Success();
     }
 
-    private readonly Dictionary<string, string> keyValueCache = [];
-    public IReadOnlyDictionary<string, string> KeyValueCache
-    {
-        get => keyValueCache.AsReadOnly();
-    }
+    private bool IsKeyInCache(string key) => _cache.ContainsKey(key);
+
+    public IReadOnlyDictionary<string, string> KeyValueCache { get => _cache.KeyValues; }
 }

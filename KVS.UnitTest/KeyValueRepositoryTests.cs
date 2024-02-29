@@ -1,5 +1,6 @@
 using KVS.Errors;
 using KVS.Repositories;
+using Moq;
 using OneOf.Types;
 
 namespace KVS.UnitTests;
@@ -12,7 +13,13 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string validKey = "Valid";
         const string expectedValue = "Value";
-        var keyValueRepository = new KeyValueRepository();
+
+        var databaseMock = new Mock<IKeyValueDatabase>();
+        databaseMock
+            .Setup(m => m.Add(validKey, expectedValue))
+            .Verifiable();
+
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
         var result = keyValueRepository.AddKeyValue(validKey, expectedValue);
@@ -22,6 +29,7 @@ public sealed class KeyValueRepositoryTests
         Assert.That(success, Is.Not.Null);
 
         AssertRepositoryHasKeyValuePair(keyValueRepository, validKey, expectedValue);
+        databaseMock.Verify();
     }
 
     [Test]
@@ -29,7 +37,10 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string duplicateKey = "Duplicate";
-        var keyValueRepository = new KeyValueRepository(new() { { duplicateKey, "" } });
+
+        var keyValueCache = new KeyValueCache(new Dictionary<string, string>() { { duplicateKey, "" } });
+
+        var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
         // Act
         var result = keyValueRepository.AddKeyValue(duplicateKey, "");
@@ -40,12 +51,40 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void GetValueByKey_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent()
+    public void GetValueByKey_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent_InTheCache()
     {
         // Arrange
         const string presentKey = "present";
         const string expectedValue = "Value";
-        var keyValueRepository = new KeyValueRepository(new() { { presentKey, expectedValue } });
+
+        var keyValueCache = new KeyValueCache(new Dictionary<string, string>() { { presentKey, expectedValue } });
+
+        var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
+
+        // Act
+        var result = keyValueRepository.GetValueByKey(presentKey);
+
+        // Assert
+        var success = result.Value as Success<string>?;
+        Assert.That(success, Is.Not.Null);
+
+        var actualValue = success.Value.Value;
+        Assert.That(actualValue, Is.EqualTo(expectedValue));
+    }
+
+    [Test]
+    public void GetValueByKey_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent_InTheDatabase()
+    {
+        // Arrange
+        const string presentKey = "present";
+        string? expectedValue = "Value";
+
+        var databaseMock = new Mock<IKeyValueDatabase>();
+        databaseMock
+            .Setup(m => m.TryGet(presentKey, out expectedValue))
+            .Returns(true);
+
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
         var result = keyValueRepository.GetValueByKey(presentKey);
@@ -63,7 +102,13 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository();
+
+        var databaseMock = new Mock<IKeyValueDatabase>();
+        databaseMock
+            .Setup(m => m.TryGet(notPresentKey, out It.Ref<string?>.IsAny))
+            .Returns(false);
+
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
         var result = keyValueRepository.GetValueByKey(notPresentKey);
@@ -79,7 +124,15 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string presentKey = "present";
         const string expectedValue = "expected";
-        var keyValueRepository = new KeyValueRepository(new() { { presentKey, "" } });
+
+        var keyValueCache = new KeyValueCache(new Dictionary<string, string>() { { presentKey, "" } });
+
+        var databaseMock = new Mock<IKeyValueDatabase>();
+        databaseMock
+            .Setup(m => m.Update(presentKey, expectedValue))
+            .Verifiable();
+
+        var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
 
         // Act
         var result = keyValueRepository.UpdateKeyValue(presentKey, expectedValue);
@@ -89,6 +142,7 @@ public sealed class KeyValueRepositoryTests
         Assert.That(success, Is.Not.Null);
 
         AssertRepositoryHasKeyValuePair(keyValueRepository, presentKey, expectedValue);
+        databaseMock.Verify();
     }
 
     [Test]
@@ -96,7 +150,8 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository();
+
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
 
         // Act
         var result = keyValueRepository.UpdateKeyValue(notPresentKey, "");
@@ -111,7 +166,15 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string presentKey = "present";
-        var keyValueRepository = new KeyValueRepository(new() { { presentKey, "" } });
+
+        var keyValueCache = new KeyValueCache(new Dictionary<string, string>() { { presentKey, "" } });
+
+        var databaseMock = new Mock<IKeyValueDatabase>();
+        databaseMock
+            .Setup(m => m.Delete(presentKey))
+            .Verifiable();
+
+        var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
 
         // Act
         var result = keyValueRepository.RemoveByKey(presentKey);
@@ -119,6 +182,8 @@ public sealed class KeyValueRepositoryTests
         // Assert
         var success = result.Value as Success?;
         Assert.That(success, Is.Not.Null);
+
+        databaseMock.Verify();
     }
 
     [Test]
@@ -126,7 +191,7 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository();
+        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
 
         // Act
         var result = keyValueRepository.RemoveByKey(notPresentKey);
@@ -142,4 +207,6 @@ public sealed class KeyValueRepositoryTests
         Assert.That(hasKey, Is.True);
         Assert.That(repo.KeyValueCache[key], Is.EqualTo(expectedValue));
     }
+
+    static private IKeyValueDatabase EmptyDb => new Mock<IKeyValueDatabase>().Object;
 }

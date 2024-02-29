@@ -1,11 +1,17 @@
 using Asp.Versioning;
+using KVS.Data;
 using KVS.Endpoints.v1;
 using KVS.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SupportNonNullableReferenceTypes();
+});
+
+builder.Services.AddDbContext<DatabaseContext>();
 
 builder.Services.AddApiVersioning(options =>
 {
@@ -25,6 +31,8 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    await app.EnsureDatabaseIsUpToDateAsync();
+
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
