@@ -60,6 +60,38 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
+    public void HandleCreateKeyValueRequest_ReturnsBadRequest_WhenKeyIsNull()
+    {
+        // Arrange
+        var request = new CreateKeyValueRequest(null!, "");
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        // Act
+        var result = KeyValueEndpoints.HandleCreateKeyValueRequest(CreateLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var badRequest = result as BadRequest<string>;
+        Assert.That(badRequest, Is.Not.Null);
+    }
+
+    [Test]
+    public void HandleCreateKeyValueRequest_ReturnsBadRequest_WhenValueIsNull()
+    {
+        // Arrange
+        var request = new CreateKeyValueRequest("", null!); 
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        // Act
+        var result = KeyValueEndpoints.HandleCreateKeyValueRequest(CreateLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var badRequest = result as BadRequest<string>;
+        Assert.That(badRequest, Is.Not.Null);
+    }
+
+    [Test]
     public void HandleReadValueRequest_ReturnsOk_WhenKeyIsPresent()
     {
         // Arrange
@@ -99,6 +131,20 @@ public sealed class KeyValueV1EndpointTests
         // Assert
         var notFound = result as NotFound<string>;
         Assert.That(notFound, Is.Not.Null);
+    }
+
+    [Test]
+    public void HandleReadValueRequest_ReturnsBadRequest_WhenKeyIsNull()
+    {
+        // Arrange
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        // Act
+        var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, null!);
+
+        // Assert
+        var badRequest = result as BadRequest<string>;
+        Assert.That(badRequest, Is.Not.Null);
     }
 
     [Test]
@@ -144,6 +190,38 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
+    public void HandleUpdateKeyValueRequest_ReturnsBadRequest_WhenKeyIsNull()
+    {
+        // Arrange
+        var request = new UpdateKeyValueRequest(null!, "");
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        // Act
+        var result = KeyValueEndpoints.HandleUpdateKeyValueRequest(UpdateLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var badRequest = result as BadRequest<string>;
+        Assert.That(badRequest, Is.Not.Null);
+    }
+
+    [Test]
+    public void HandleUpdateKeyValueRequest_ReturnsBadRequest_WhenValueIsNull()
+    {
+        // Arrange
+        var request = new UpdateKeyValueRequest("", null!);
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        // Act
+        var result = KeyValueEndpoints.HandleUpdateKeyValueRequest(UpdateLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var badRequest = result as BadRequest<string>;
+        Assert.That(badRequest, Is.Not.Null);
+    }
+
+    [Test]
     public void HandleRemoveKeyRequest_ReturnsNoContent_WhenKeyIsPresent()
     {
         // Arrange
@@ -183,6 +261,22 @@ public sealed class KeyValueV1EndpointTests
         // Assert
         var notFound = result as NotFound<string>;
         Assert.That(notFound, Is.Not.Null);
+    }
+
+    [Test]
+    public void HandleRemoveKeyRequest_ReturnsBadRequest_WhenKeyIsNull()
+    {
+        // Arrange
+        var request = new RemoveKeyRequest(null!);
+
+        var keyValueRepoMock = new Mock<IKeyValueRepository>();
+
+        // Act
+        var result = KeyValueEndpoints.HandleRemoveKeyRequest(DeleteLogger, keyValueRepoMock.Object, request);
+
+        // Assert
+        var badRequest = result as BadRequest<string>;
+        Assert.That(badRequest, Is.Not.Null);
     }
 
     static private NullLogger<CreateKeyValueRequest> CreateLogger { get; } = new();

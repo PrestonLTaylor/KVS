@@ -1,12 +1,10 @@
-﻿using KVS.Data;
-using KVS.Errors;
+﻿using KVS.Errors;
 using OneOf;
 using OneOf.Types;
 using System.Diagnostics.CodeAnalysis;
 
 namespace KVS.Repositories;
 
-// FIXME: Validation for strings (no nulls)
 public sealed class KeyValueRepository(IKeyValueCache _cache, IKeyValueDatabase _database) : IKeyValueRepository
 {
     public OneOf<Success, AlreadyPresentError> AddKeyValue(string key, string value)

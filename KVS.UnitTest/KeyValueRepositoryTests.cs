@@ -1,5 +1,4 @@
 using KVS.Errors;
-using KVS.Models;
 using KVS.Repositories;
 using Moq;
 using OneOf.Types;

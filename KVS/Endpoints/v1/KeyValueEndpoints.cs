@@ -1,6 +1,7 @@
 ﻿using Asp.Versioning;
 using KVS.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace KVS.Endpoints.v1;
 
@@ -34,9 +35,15 @@ public static class KeyValueEndpoints
     }
 
     [ProducesResponseType(201)]
+    [ProducesResponseType(400)]
     [ProducesResponseType(409)]
     static public IResult HandleCreateKeyValueRequest(ILogger<CreateKeyValueRequest> logger, IKeyValueRepository repo, [FromBody] CreateKeyValueRequest request)
     {
+        if (request.NewKey is null || request.Value is null)
+        {
+            return Results.BadRequest("The newKey and value field can not be null.");
+        }
+
         logger.LogInformation("Creation of key '{Key}' with the value '{Value}' was requested", request.NewKey, request.Value);
 
         var result = repo.AddKeyValue(request.NewKey, request.Value);
@@ -56,9 +63,15 @@ public static class KeyValueEndpoints
     }
 
     [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
     [ProducesResponseType(404)]
     static public IResult HandleReadValueRequest(ILogger<ReadValueRequest> logger, IKeyValueRepository repo, [FromRoute] string key)
     {
+        if (key is null)
+        {
+            return Results.BadRequest("The key can not be null.");
+        }
+
         logger.LogInformation("The value of Key '{Key}' was requested", key);
 
         var result = repo.GetValueByKey(key);
@@ -78,9 +91,15 @@ public static class KeyValueEndpoints
     }
 
     [ProducesResponseType(204)]
+    [ProducesResponseType(400)]
     [ProducesResponseType(404)]
     static public IResult HandleUpdateKeyValueRequest(ILogger<UpdateKeyValueRequest> logger, IKeyValueRepository repo, [FromBody] UpdateKeyValueRequest request)
     {
+        if (request.Key is null || request.NewValue is null)
+        {
+            return Results.BadRequest("The key and newValue can not be null.");
+        }
+
         logger.LogInformation("The value of key '{Key}' was requested to be updated with the value '{NewValue}'", request.Key, request.NewValue);
 
         var result = repo.UpdateKeyValue(request.Key, request.NewValue);
@@ -100,9 +119,15 @@ public static class KeyValueEndpoints
     }
 
     [ProducesResponseType(204)]
+    [ProducesResponseType(400)]
     [ProducesResponseType(404)]
     static public IResult HandleRemoveKeyRequest(ILogger<RemoveKeyRequest> logger, IKeyValueRepository repo, [FromBody] RemoveKeyRequest request)
     {
+        if (request.Key is null)
+        {
+            return Results.BadRequest("The key can not be null.");
+        }
+
         logger.LogInformation("The value of key '{Key}' was requested to be deleted", request.Key);
 
         var result = repo.RemoveByKey(request.Key);
