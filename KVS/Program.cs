@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using KVS.Data;
 using KVS.Endpoints.v1;
+using KVS.Installers;
 using KVS.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,8 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SupportNonNullableReferenceTypes();
 });
+
+builder.Services.AddRabbitMq(builder.Configuration);
 
 builder.Services.AddDbContext<DatabaseContext>();
 

@@ -10,6 +10,7 @@ services:
     ports:
       - 80:80
       - 443:443 
+
   postgres:
     container_name: postgres-container
     image: postgres
@@ -20,6 +21,21 @@ services:
     volumes:
       - db-data:/var/lib/postgres/data
 
+  rabbit-mq:
+    container_name: rabbit-mq-container
+    image: rabbitmq:management
+    ports:
+      - 8080:15672
+    environment:
+      # TODO: Use a rabbitmq configuration file, https://www.rabbitmq.com/docs/configure, for the same reasons as postgres
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbit-mq-data:/var/lib/rabbitmq
+
 volumes:
   db-data:
+    name: kvs-db-data
+  rabbit-mq-data:
+    name: kvs-rabbit-mq-data
       
