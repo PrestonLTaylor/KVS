@@ -1,13 +1,12 @@
 ﻿using KVS.Errors;
 using OneOf;
 using OneOf.Types;
-using System.Diagnostics.CodeAnalysis;
 
 namespace KVS.Repositories;
 
 public sealed class KeyValueRepository(IKeyValueCache _cache, IKeyValueDatabase _database) : IKeyValueRepository
 {
-    public OneOf<Success, AlreadyPresentError> AddKeyValue(string key, string value)
+    public async Task<OneOf<Success, AlreadyPresentError>> AddKeyValueAsync(string key, string value)
     {
         if (IsKeyInCache(key))
         {
@@ -15,38 +14,39 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, IKeyValueDatabase 
         }
 
         _cache.Add(key, value);
-        _database.Add(key, value);
+        await _database.AddAsync(key, value);
 
         return new Success();
     }
 
-    public OneOf<Success<string>, NotFound> GetValueByKey(string key)
+    public async Task<OneOf<Success<string>, NotFound>> GetValueByKeyAsync(string key)
     {
         if (_cache.TryGetValue(key, out var value))
         {
             return new Success<string>(value);
         }
         // FIXME: We probably want a cache "dirty" flag so we don't always try to read from the database if a key doesn't exist
-        if (TryReadKeyValueFromPersistance(key, out value))
+        (var exists, value) = await TryReadKeyValueFromPersistanceAsync(key);
+        if (exists)
         {
-            return new Success<string>(value);
+            return new Success<string>(value!);
         }
 
         return new NotFound();
     }
 
-    private bool TryReadKeyValueFromPersistance(string key, [MaybeNullWhen(false)] out string value)
+    private async Task<(bool, string?)> TryReadKeyValueFromPersistanceAsync(string key)
     {
-        if (!_database.TryGet(key, out value))
+        var (exists, value) = await _database.TryGetAsync(key);
+        if (exists)
         {
-            return false;
+            _cache.Add(key, value!);
         }
 
-        _cache.Add(key, value);
-        return true;
+        return (exists, value);
     }
 
-    public OneOf<Success, NotFound> RemoveByKey(string key)
+    public async Task<OneOf<Success, NotFound>> RemoveByKeyAsync(string key)
     {
         if (!IsKeyInCache(key))
         {
@@ -54,12 +54,12 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, IKeyValueDatabase 
         }
 
         _cache.Remove(key);
-        _database.Delete(key);
+        await _database.DeleteAsync(key);
 
         return new Success();
     }
 
-    public OneOf<Success, NotFound> UpdateKeyValue(string key, string newValue)
+    public async Task<OneOf<Success, NotFound>> UpdateKeyValueAsync(string key, string newValue)
     {
         if (!IsKeyInCache(key))
         {
@@ -67,7 +67,7 @@ public sealed class KeyValueRepository(IKeyValueCache _cache, IKeyValueDatabase 
         }
 
         _cache[key] = newValue;
-        _database.Update(key, newValue);
+        await _database.UpdateAsync(key, newValue);
 
         return new Success();
     }

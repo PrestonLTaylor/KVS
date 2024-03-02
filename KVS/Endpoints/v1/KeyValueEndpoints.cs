@@ -46,9 +46,10 @@ public static class KeyValueEndpoints
 
         logger.LogInformation("Creation of key '{Key}' with the value '{Value}' was requested", request.NewKey, request.Value);
 
-        var result = repo.AddKeyValue(request.NewKey, request.Value);
+        var result = repo.AddKeyValueAsync(request.NewKey, request.Value);
+        result.Wait();
 
-        return result.Match(
+        return result.Result.Match(
             success =>
             {
                 logger.LogInformation("Key '{NewKey}' was successfully created with an initial value of '{InitialValue}'", request.NewKey, request.Value);
@@ -74,9 +75,10 @@ public static class KeyValueEndpoints
 
         logger.LogInformation("The value of Key '{Key}' was requested", key);
 
-        var result = repo.GetValueByKey(key);
+        var result = repo.GetValueByKeyAsync(key);
+        result.Wait();
 
-        return result.Match(
+        return result.Result.Match(
             success =>
             {
                 logger.LogInformation("The key '{Key}' was found with the value of '{Value}'", key, success.Value);
@@ -102,9 +104,10 @@ public static class KeyValueEndpoints
 
         logger.LogInformation("The value of key '{Key}' was requested to be updated with the value '{NewValue}'", request.Key, request.NewValue);
 
-        var result = repo.UpdateKeyValue(request.Key, request.NewValue);
+        var result = repo.UpdateKeyValueAsync(request.Key, request.NewValue);
+        result.Wait();
 
-        return result.Match(
+        return result.Result.Match(
             success =>
             {
                 logger.LogInformation("The key '{Key}' was updated to the value '{Value}'", request.Key, request.NewValue);
@@ -130,9 +133,10 @@ public static class KeyValueEndpoints
 
         logger.LogInformation("The value of key '{Key}' was requested to be deleted", request.Key);
 
-        var result = repo.RemoveByKey(request.Key);
+        var result = repo.RemoveByKeyAsync(request.Key);
+        result.Wait();
 
-        return result.Match(
+        return result.Result.Match(
             success =>
             {
                 logger.LogInformation("The key '{Key}' was deleted", request.Key);

@@ -8,7 +8,7 @@ namespace KVS.UnitTests;
 public sealed class KeyValueRepositoryTests
 {
     [Test]
-    public void AddKeyValue_ReturnsSuccess_WhenKeyIsNotAlreadyPresent()
+    public async Task AddKeyValueAsync_ReturnsSuccess_WhenKeyIsNotAlreadyPresent()
     {
         // Arrange
         const string validKey = "Valid";
@@ -16,13 +16,13 @@ public sealed class KeyValueRepositoryTests
 
         var databaseMock = new Mock<IKeyValueDatabase>();
         databaseMock
-            .Setup(m => m.Add(validKey, expectedValue))
+            .Setup(m => m.AddAsync(validKey, expectedValue))
             .Verifiable();
 
         var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
-        var result = keyValueRepository.AddKeyValue(validKey, expectedValue);
+        var result = await keyValueRepository.AddKeyValueAsync(validKey, expectedValue);
 
         // Assert
         var success = result.Value as Success?;
@@ -33,7 +33,7 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void AddKeyValue_ReturnsAlreadyPresent_WhenSameKeyIsAlreadyPresent()
+    public async Task AddKeyValueAsync_ReturnsAlreadyPresent_WhenSameKeyIsAlreadyPresent()
     {
         // Arrange
         const string duplicateKey = "Duplicate";
@@ -43,7 +43,7 @@ public sealed class KeyValueRepositoryTests
         var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
         // Act
-        var result = keyValueRepository.AddKeyValue(duplicateKey, "");
+        var result = await keyValueRepository.AddKeyValueAsync(duplicateKey, "");
 
         // Assert
         var alreadyPresentError = result.Value as AlreadyPresentError?;
@@ -51,7 +51,7 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void GetValueByKey_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent_InTheCache()
+    public async Task GetValueByKeyAsync_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent_InTheCache()
     {
         // Arrange
         const string presentKey = "present";
@@ -62,7 +62,7 @@ public sealed class KeyValueRepositoryTests
         var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
 
         // Act
-        var result = keyValueRepository.GetValueByKey(presentKey);
+        var result = await keyValueRepository.GetValueByKeyAsync(presentKey);
 
         // Assert
         var success = result.Value as Success<string>?;
@@ -73,7 +73,7 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void GetValueByKey_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent_InTheDatabase()
+    public async Task GetValueByKeyAsync_ReturnsSuccess_WithExpectedKey_WhenKeyIsPresent_InTheDatabase()
     {
         // Arrange
         const string presentKey = "present";
@@ -81,13 +81,13 @@ public sealed class KeyValueRepositoryTests
 
         var databaseMock = new Mock<IKeyValueDatabase>();
         databaseMock
-            .Setup(m => m.TryGet(presentKey, out expectedValue))
-            .Returns(true);
+            .Setup(m => m.TryGetAsync(presentKey))
+            .ReturnsAsync((true, expectedValue));
 
         var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
-        var result = keyValueRepository.GetValueByKey(presentKey);
+        var result = await keyValueRepository.GetValueByKeyAsync(presentKey);
 
         // Assert
         var success = result.Value as Success<string>?;
@@ -98,20 +98,20 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void GetValueByKey_ReturnsNotFound_WhenKeyIsNotPresent()
+    public async Task GetValueByKeyAsync_ReturnsNotFound_WhenKeyIsNotPresent()
     {
         // Arrange
         const string notPresentKey = "notpresent";
 
         var databaseMock = new Mock<IKeyValueDatabase>();
         databaseMock
-            .Setup(m => m.TryGet(notPresentKey, out It.Ref<string?>.IsAny))
-            .Returns(false);
+            .Setup(m => m.TryGetAsync(notPresentKey))
+            .ReturnsAsync((false, It.IsAny<string>()));
 
         var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
 
         // Act
-        var result = keyValueRepository.GetValueByKey(notPresentKey);
+        var result = await keyValueRepository.GetValueByKeyAsync(notPresentKey);
 
         // Assert
         var notFound = result.Value as NotFound?;
@@ -119,7 +119,7 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void UpdateKeyValue_ReturnsSuccess_WhenKeyIsPresent()
+    public async Task UpdateKeyValueAsync_ReturnsSuccess_WhenKeyIsPresent()
     {
         // Arrange
         const string presentKey = "present";
@@ -129,13 +129,13 @@ public sealed class KeyValueRepositoryTests
 
         var databaseMock = new Mock<IKeyValueDatabase>();
         databaseMock
-            .Setup(m => m.Update(presentKey, expectedValue))
+            .Setup(m => m.UpdateAsync(presentKey, expectedValue))
             .Verifiable();
 
         var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
 
         // Act
-        var result = keyValueRepository.UpdateKeyValue(presentKey, expectedValue);
+        var result = await keyValueRepository.UpdateKeyValueAsync(presentKey, expectedValue);
 
         // Assert
         var success = result.Value as Success?;
@@ -146,7 +146,7 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void UpdateKeyValue_ReturnsNotFound_WhenKeyIsNotPresent()
+    public async Task UpdateKeyValueAsync_ReturnsNotFound_WhenKeyIsNotPresent()
     {
         // Arrange
         const string notPresentKey = "notpresent";
@@ -154,7 +154,7 @@ public sealed class KeyValueRepositoryTests
         var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
 
         // Act
-        var result = keyValueRepository.UpdateKeyValue(notPresentKey, "");
+        var result = await keyValueRepository.UpdateKeyValueAsync(notPresentKey, "");
 
         // Assert
         var notFound = result.Value as NotFound?;
@@ -162,7 +162,7 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void RemoveByKey_ReturnsSuccess_WhenKeyIsPresent()
+    public async Task RemoveByKeyAsync_ReturnsSuccess_WhenKeyIsPresent()
     {
         // Arrange
         const string presentKey = "present";
@@ -171,13 +171,13 @@ public sealed class KeyValueRepositoryTests
 
         var databaseMock = new Mock<IKeyValueDatabase>();
         databaseMock
-            .Setup(m => m.Delete(presentKey))
+            .Setup(m => m.DeleteAsync(presentKey))
             .Verifiable();
 
         var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
 
         // Act
-        var result = keyValueRepository.RemoveByKey(presentKey);
+        var result = await keyValueRepository.RemoveByKeyAsync(presentKey);
 
         // Assert
         var success = result.Value as Success?;
@@ -187,14 +187,14 @@ public sealed class KeyValueRepositoryTests
     }
 
     [Test]
-    public void RemoveByKey_ReturnsNotFound_WhenKeyIsNotPresent()
+    public async Task RemoveByKeyAsync_ReturnsNotFound_WhenKeyIsNotPresent()
     {
         // Arrange
         const string notPresentKey = "notpresent";
         var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
 
         // Act
-        var result = keyValueRepository.RemoveByKey(notPresentKey);
+        var result = await keyValueRepository.RemoveByKeyAsync(notPresentKey);
 
         // Assert
         var notFound = result.Value as NotFound?;

@@ -21,8 +21,8 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.AddKeyValue(notPresentKey, expectedValue))
-            .Returns(new Success());
+            .Setup(m => m.AddKeyValueAsync(notPresentKey, expectedValue))
+            .ReturnsAsync(new Success());
 
         // Act
         var result = KeyValueEndpoints.HandleCreateKeyValueRequest(CreateLogger, keyValueRepoMock.Object, request);
@@ -48,8 +48,8 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.AddKeyValue(presentKey, It.IsAny<string>()))
-            .Returns(new AlreadyPresentError());
+            .Setup(m => m.AddKeyValueAsync(presentKey, It.IsAny<string>()))
+            .ReturnsAsync(new AlreadyPresentError());
 
         // Act
         var result = KeyValueEndpoints.HandleCreateKeyValueRequest(CreateLogger, keyValueRepoMock.Object, request);
@@ -101,8 +101,8 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.GetValueByKey(presentKey))
-            .Returns(new Success<string>(expectedValue));
+            .Setup(m => m.GetValueByKeyAsync(presentKey))
+            .ReturnsAsync(new Success<string>(expectedValue));
 
         // Act
         var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, presentKey);
@@ -122,8 +122,8 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.GetValueByKey(notPresentKey))
-            .Returns(new OneOf.Types.NotFound());
+            .Setup(m => m.GetValueByKeyAsync(notPresentKey))
+            .ReturnsAsync(new OneOf.Types.NotFound());
 
         // Act
         var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, notPresentKey);
@@ -157,8 +157,8 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.UpdateKeyValue(presentKey, It.IsAny<string>()))
-            .Returns(new Success());
+            .Setup(m => m.UpdateKeyValueAsync(presentKey, It.IsAny<string>()))
+            .ReturnsAsync(new Success());
 
         // Act
         var result = KeyValueEndpoints.HandleUpdateKeyValueRequest(UpdateLogger, keyValueRepoMock.Object, request);
@@ -178,8 +178,8 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.UpdateKeyValue(notPresentKey, It.IsAny<string>()))
-            .Returns(new OneOf.Types.NotFound());
+            .Setup(m => m.UpdateKeyValueAsync(notPresentKey, It.IsAny<string>()))
+            .ReturnsAsync(new OneOf.Types.NotFound());
 
         // Act
         var result = KeyValueEndpoints.HandleUpdateKeyValueRequest(UpdateLogger, keyValueRepoMock.Object, request);
@@ -231,8 +231,8 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.RemoveByKey(presentKey))
-            .Returns(new Success());
+            .Setup(m => m.RemoveByKeyAsync(presentKey))
+            .ReturnsAsync(new Success());
 
         // Act
         var result = KeyValueEndpoints.HandleRemoveKeyRequest(DeleteLogger, keyValueRepoMock.Object, request);
@@ -252,8 +252,8 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.RemoveByKey(notPresentKey))
-            .Returns(new OneOf.Types.NotFound());
+            .Setup(m => m.RemoveByKeyAsync(notPresentKey))
+            .ReturnsAsync(new OneOf.Types.NotFound());
 
         // Act
         var result = KeyValueEndpoints.HandleRemoveKeyRequest(DeleteLogger, keyValueRepoMock.Object, request);
