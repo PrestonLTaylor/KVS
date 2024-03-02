@@ -23,13 +23,13 @@ public static class KeyValueEndpoints
             .HasApiVersion(new ApiVersion(1, 0))
             .ReportApiVersions();
 
-        v1.MapPost("/", HandleCreateKeyValueRequest);
+        v1.MapPost("/", HandleCreateKeyValueRequestAsync);
 
-        v1.MapGet("/{key}", HandleReadValueRequest);
+        v1.MapGet("/{key}", HandleReadValueRequestAsync);
 
-        v1.MapPut("/", HandleUpdateKeyValueRequest);
+        v1.MapPut("/", HandleUpdateKeyValueRequestAsync);
 
-        v1.MapDelete("/", HandleRemoveKeyRequest);
+        v1.MapDelete("/", HandleRemoveKeyRequestAsync);
 
         return app;
     }
@@ -37,7 +37,8 @@ public static class KeyValueEndpoints
     [ProducesResponseType(201)]
     [ProducesResponseType(400)]
     [ProducesResponseType(409)]
-    static public IResult HandleCreateKeyValueRequest(ILogger<CreateKeyValueRequest> logger, IKeyValueRepository repo, [FromBody] CreateKeyValueRequest request)
+    static public async Task<IResult> HandleCreateKeyValueRequestAsync(ILogger<CreateKeyValueRequest> logger, IKeyValueRepository repo, 
+        [FromBody] CreateKeyValueRequest request)
     {
         if (request.NewKey is null || request.Value is null)
         {
@@ -46,10 +47,9 @@ public static class KeyValueEndpoints
 
         logger.LogInformation("Creation of key '{Key}' with the value '{Value}' was requested", request.NewKey, request.Value);
 
-        var result = repo.AddKeyValueAsync(request.NewKey, request.Value);
-        result.Wait();
+        var result = await repo.AddKeyValueAsync(request.NewKey, request.Value);
 
-        return result.Result.Match(
+        return result.Match(
             success =>
             {
                 logger.LogInformation("Key '{NewKey}' was successfully created with an initial value of '{InitialValue}'", request.NewKey, request.Value);
@@ -66,7 +66,8 @@ public static class KeyValueEndpoints
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
-    static public IResult HandleReadValueRequest(ILogger<ReadValueRequest> logger, IKeyValueRepository repo, [FromRoute] string key)
+    static public async Task<IResult> HandleReadValueRequestAsync(ILogger<ReadValueRequest> logger, IKeyValueRepository repo,
+        [FromRoute] string key)
     {
         if (key is null)
         {
@@ -75,10 +76,9 @@ public static class KeyValueEndpoints
 
         logger.LogInformation("The value of Key '{Key}' was requested", key);
 
-        var result = repo.GetValueByKeyAsync(key);
-        result.Wait();
+        var result = await repo.GetValueByKeyAsync(key);
 
-        return result.Result.Match(
+        return result.Match(
             success =>
             {
                 logger.LogInformation("The key '{Key}' was found with the value of '{Value}'", key, success.Value);
@@ -95,7 +95,8 @@ public static class KeyValueEndpoints
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
-    static public IResult HandleUpdateKeyValueRequest(ILogger<UpdateKeyValueRequest> logger, IKeyValueRepository repo, [FromBody] UpdateKeyValueRequest request)
+    static public async Task<IResult> HandleUpdateKeyValueRequestAsync(ILogger<UpdateKeyValueRequest> logger, IKeyValueRepository repo,
+        [FromBody] UpdateKeyValueRequest request)
     {
         if (request.Key is null || request.NewValue is null)
         {
@@ -104,10 +105,9 @@ public static class KeyValueEndpoints
 
         logger.LogInformation("The value of key '{Key}' was requested to be updated with the value '{NewValue}'", request.Key, request.NewValue);
 
-        var result = repo.UpdateKeyValueAsync(request.Key, request.NewValue);
-        result.Wait();
+        var result = await repo.UpdateKeyValueAsync(request.Key, request.NewValue);
 
-        return result.Result.Match(
+        return result.Match(
             success =>
             {
                 logger.LogInformation("The key '{Key}' was updated to the value '{Value}'", request.Key, request.NewValue);
@@ -124,7 +124,8 @@ public static class KeyValueEndpoints
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
-    static public IResult HandleRemoveKeyRequest(ILogger<RemoveKeyRequest> logger, IKeyValueRepository repo, [FromBody] RemoveKeyRequest request)
+    static public async Task<IResult> HandleRemoveKeyRequestAsync(ILogger<RemoveKeyRequest> logger, IKeyValueRepository repo,
+        [FromBody] RemoveKeyRequest request)
     {
         if (request.Key is null)
         {
@@ -133,10 +134,9 @@ public static class KeyValueEndpoints
 
         logger.LogInformation("The value of key '{Key}' was requested to be deleted", request.Key);
 
-        var result = repo.RemoveByKeyAsync(request.Key);
-        result.Wait();
+        var result = await repo.RemoveByKeyAsync(request.Key);
 
-        return result.Result.Match(
+        return result.Match(
             success =>
             {
                 logger.LogInformation("The key '{Key}' was deleted", request.Key);
