@@ -1,5 +1,8 @@
 using KVS.Errors;
+using KVS.Messages;
 using KVS.Repositories;
+using MassTransit;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using OneOf.Types;
 
@@ -19,7 +22,12 @@ public sealed class KeyValueRepositoryTests
             .Setup(m => m.AddAsync(validKey, expectedValue))
             .Verifiable();
 
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
+        var busMock = new Mock<IBus>();
+        busMock
+            .Setup(m => m.Publish(new KeyModified(validKey), default))
+            .Verifiable();
+
+        var keyValueRepository = new KeyValueRepository(Logger, new KeyValueCache(), databaseMock.Object, busMock.Object);
 
         // Act
         var result = await keyValueRepository.AddKeyValueAsync(validKey, expectedValue);
@@ -30,6 +38,7 @@ public sealed class KeyValueRepositoryTests
 
         AssertRepositoryHasKeyValuePair(keyValueRepository, validKey, expectedValue);
         databaseMock.Verify();
+        busMock.Verify();
     }
 
     [Test]
@@ -40,7 +49,7 @@ public sealed class KeyValueRepositoryTests
 
         var keyValueCache = new KeyValueCache(new Dictionary<string, string>() { { duplicateKey, "" } });
 
-        var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
+        var keyValueRepository = new KeyValueRepository(Logger, keyValueCache, EmptyDb, EmptyBus);
 
         // Act
         var result = await keyValueRepository.AddKeyValueAsync(duplicateKey, "");
@@ -59,7 +68,7 @@ public sealed class KeyValueRepositoryTests
 
         var keyValueCache = new KeyValueCache(new Dictionary<string, string>() { { presentKey, expectedValue } });
 
-        var keyValueRepository = new KeyValueRepository(keyValueCache, EmptyDb);
+        var keyValueRepository = new KeyValueRepository(Logger, keyValueCache, EmptyDb, EmptyBus);
 
         // Act
         var result = await keyValueRepository.GetValueByKeyAsync(presentKey);
@@ -84,7 +93,7 @@ public sealed class KeyValueRepositoryTests
             .Setup(m => m.TryGetAsync(presentKey))
             .ReturnsAsync((true, expectedValue));
 
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
+        var keyValueRepository = new KeyValueRepository(Logger, new KeyValueCache(), databaseMock.Object, EmptyBus);
 
         // Act
         var result = await keyValueRepository.GetValueByKeyAsync(presentKey);
@@ -108,7 +117,7 @@ public sealed class KeyValueRepositoryTests
             .Setup(m => m.TryGetAsync(notPresentKey))
             .ReturnsAsync((false, It.IsAny<string>()));
 
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), databaseMock.Object);
+        var keyValueRepository = new KeyValueRepository(Logger, new KeyValueCache(), databaseMock.Object, EmptyBus);
 
         // Act
         var result = await keyValueRepository.GetValueByKeyAsync(notPresentKey);
@@ -132,7 +141,12 @@ public sealed class KeyValueRepositoryTests
             .Setup(m => m.UpdateAsync(presentKey, expectedValue))
             .Verifiable();
 
-        var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
+        var busMock = new Mock<IBus>();
+        busMock
+            .Setup(m => m.Publish(new KeyModified(presentKey), default))
+            .Verifiable();
+
+        var keyValueRepository = new KeyValueRepository(Logger, keyValueCache, databaseMock.Object, busMock.Object);
 
         // Act
         var result = await keyValueRepository.UpdateKeyValueAsync(presentKey, expectedValue);
@@ -143,6 +157,7 @@ public sealed class KeyValueRepositoryTests
 
         AssertRepositoryHasKeyValuePair(keyValueRepository, presentKey, expectedValue);
         databaseMock.Verify();
+        busMock.Verify();
     }
 
     [Test]
@@ -151,7 +166,7 @@ public sealed class KeyValueRepositoryTests
         // Arrange
         const string notPresentKey = "notpresent";
 
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
+        var keyValueRepository = new KeyValueRepository(Logger, new KeyValueCache(), EmptyDb, EmptyBus);
 
         // Act
         var result = await keyValueRepository.UpdateKeyValueAsync(notPresentKey, "");
@@ -174,7 +189,12 @@ public sealed class KeyValueRepositoryTests
             .Setup(m => m.DeleteAsync(presentKey))
             .Verifiable();
 
-        var keyValueRepository = new KeyValueRepository(keyValueCache, databaseMock.Object);
+        var busMock = new Mock<IBus>();
+        busMock
+            .Setup(m => m.Publish(new KeyDeletion(presentKey), default))
+            .Verifiable();
+
+        var keyValueRepository = new KeyValueRepository(Logger, keyValueCache, databaseMock.Object, busMock.Object);
 
         // Act
         var result = await keyValueRepository.RemoveByKeyAsync(presentKey);
@@ -184,6 +204,7 @@ public sealed class KeyValueRepositoryTests
         Assert.That(success, Is.Not.Null);
 
         databaseMock.Verify();
+        busMock.Verify();
     }
 
     [Test]
@@ -191,7 +212,7 @@ public sealed class KeyValueRepositoryTests
     {
         // Arrange
         const string notPresentKey = "notpresent";
-        var keyValueRepository = new KeyValueRepository(new KeyValueCache(), EmptyDb);
+        var keyValueRepository = new KeyValueRepository(Logger, new KeyValueCache(), EmptyDb, EmptyBus);
 
         // Act
         var result = await keyValueRepository.RemoveByKeyAsync(notPresentKey);
@@ -208,5 +229,7 @@ public sealed class KeyValueRepositoryTests
         Assert.That(repo.KeyValueCache[key], Is.EqualTo(expectedValue));
     }
 
+    static private NullLogger<KeyValueRepository> Logger => new();
     static private IKeyValueDatabase EmptyDb => new Mock<IKeyValueDatabase>().Object;
+    static private IBus EmptyBus => new Mock<IBus>().Object;
 }
