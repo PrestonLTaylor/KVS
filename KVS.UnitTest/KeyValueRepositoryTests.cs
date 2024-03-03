@@ -95,6 +95,8 @@ public sealed class KeyValueRepositoryTests
 
         var keyValueRepository = new KeyValueRepository(Logger, new KeyValueCache(), databaseMock.Object, EmptyBus);
 
+        keyValueRepository.SetCacheFlagToModified(presentKey);
+
         // Act
         var result = await keyValueRepository.GetValueByKeyAsync(presentKey);
 

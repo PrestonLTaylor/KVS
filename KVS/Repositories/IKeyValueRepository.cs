@@ -10,4 +10,7 @@ public interface IKeyValueRepository
     public Task<OneOf<Success<string>, NotFound>> GetValueByKeyAsync(string key);
     public Task<OneOf<Success, NotFound>> UpdateKeyValueAsync(string key, string newValue);
     public Task<OneOf<Success, NotFound>> RemoveByKeyAsync(string key);
+
+    public void SetCacheFlagToModified(string modifiedKey);
+    public void SetCacheFlagToDeleted(string deletedKey);
 }
