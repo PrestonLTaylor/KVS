@@ -82,13 +82,13 @@ public sealed class KeyValueRepository(ILogger<KeyValueRepository> _logger, IKey
     private async Task PublishKeyModifiedMessageAsync(string key)
     {
         _logger.LogInformation("Trying to publish KeyModified message with the key '{ModifiedKey}'", key);
-        await _bus.Publish(new KeyModified(key));
+        await _bus.Publish(new KeyModified(NodeId, key));
     }
 
     private async Task PublishKeyDeletionMessageAsync(string key)
     {
         _logger.LogInformation("Trying to publish KeyDeletion message with the key '{DeletedKey}'", key);
-        await _bus.Publish(new KeyDeletion(key));
+        await _bus.Publish(new KeyDeletion(NodeId, key));
     }
 
     public void SetCacheFlagToModified(string modifiedKey)
@@ -156,6 +156,9 @@ public sealed class KeyValueRepository(ILogger<KeyValueRepository> _logger, IKey
     }
 
     private bool IsKeyInCache(string key) => _cache.ContainsKey(key);
+
+    // The id that we use to make sure we're not processing messages sent from ourselves
+    static public Guid NodeId { get; } = Guid.NewGuid();
 
     public IReadOnlyDictionary<string, string> KeyValueCache { get => _cache.KeyValues; }
     private readonly Dictionary<string, CacheState> _keyToState = [];

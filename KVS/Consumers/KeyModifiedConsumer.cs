@@ -8,10 +8,14 @@ public sealed class KeyModifiedConsumer(ILogger<KeyModifiedConsumer> _logger, IK
 {
     public Task Consume(ConsumeContext<KeyModified> context)
     {
-        var modifiedKey = context.Message.ModifiedKey;
-        _logger.LogInformation("Recieved a KeyModified message for the key '{ModifiedKey}'", modifiedKey);
+        // Filter messages sent from our own node
+        if (context.Message.NodeId != KeyValueRepository.NodeId)
+        {
+            var modifiedKey = context.Message.ModifiedKey;
+            _logger.LogInformation("Recieved a KeyModified message for the key '{ModifiedKey}'", modifiedKey);
 
-        _repo.SetCacheFlagToModified(modifiedKey);
+            _repo.SetCacheFlagToModified(modifiedKey);
+        }
 
         return Task.CompletedTask;
     }

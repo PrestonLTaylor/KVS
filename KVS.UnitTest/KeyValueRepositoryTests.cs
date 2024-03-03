@@ -24,7 +24,7 @@ public sealed class KeyValueRepositoryTests
 
         var busMock = new Mock<IBus>();
         busMock
-            .Setup(m => m.Publish(new KeyModified(validKey), default))
+            .Setup(m => m.Publish(new KeyModified(KeyValueRepository.NodeId, validKey), default))
             .Verifiable();
 
         var keyValueRepository = new KeyValueRepository(Logger, new KeyValueCache(), databaseMock.Object, busMock.Object);
@@ -145,7 +145,7 @@ public sealed class KeyValueRepositoryTests
 
         var busMock = new Mock<IBus>();
         busMock
-            .Setup(m => m.Publish(new KeyModified(presentKey), default))
+            .Setup(m => m.Publish(new KeyModified(KeyValueRepository.NodeId, presentKey), default))
             .Verifiable();
 
         var keyValueRepository = new KeyValueRepository(Logger, keyValueCache, databaseMock.Object, busMock.Object);
@@ -193,7 +193,7 @@ public sealed class KeyValueRepositoryTests
 
         var busMock = new Mock<IBus>();
         busMock
-            .Setup(m => m.Publish(new KeyDeletion(presentKey), default))
+            .Setup(m => m.Publish(new KeyDeletion(KeyValueRepository.NodeId, presentKey), default))
             .Verifiable();
 
         var keyValueRepository = new KeyValueRepository(Logger, keyValueCache, databaseMock.Object, busMock.Object);

@@ -8,10 +8,14 @@ public sealed class KeyDeletedConsumer(ILogger<KeyDeletedConsumer> _logger, IKey
 {
     public Task Consume(ConsumeContext<KeyDeletion> context)
     {
-        var deletedKey = context.Message.DeletedKey;
-        _logger.LogInformation("Recieved a KeyDeletion message for the key '{DeletedKey}'", deletedKey);
+        // Filter messages sent from our own node
+        if (context.Message.NodeId != KeyValueRepository.NodeId)
+        {
+            var deletedKey = context.Message.DeletedKey;
+            _logger.LogInformation("Recieved a KeyDeletion message for the key '{DeletedKey}'", deletedKey);
 
-        _repo.SetCacheFlagToDeleted(deletedKey);
+            _repo.SetCacheFlagToDeleted(deletedKey);
+        }
 
         return Task.CompletedTask;
     }
