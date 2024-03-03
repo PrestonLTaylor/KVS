@@ -9,6 +9,8 @@ public interface IKeyValueCache
     bool Remove(string key);
     bool ContainsKey(string key);
 
+    void UpdateOrAdd(string key, string value);
+
     string this[string index] { get; set; }
 
     public IReadOnlyDictionary<string, string> KeyValues { get; }

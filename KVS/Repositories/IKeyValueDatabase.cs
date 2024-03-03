@@ -1,11 +1,9 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace KVS.Repositories;
+﻿namespace KVS.Repositories;
 
 public interface IKeyValueDatabase
 {
-    public void Add(string key, string value);
-    public bool TryGet(string key, [MaybeNullWhen(false)] out string value);
-    public void Update(string key, string value);
-    public void Delete(string key);
+    public Task AddAsync(string key, string value);
+    public Task<(bool, string?)> TryGetAsync(string key);
+    public Task UpdateAsync(string key, string value);
+    public Task DeleteAsync(string key);
 }

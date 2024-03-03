@@ -7,39 +7,36 @@ namespace KVS.Repositories;
 // FIXME: Testing for this class (integration tests) when we have pubsub messaging set up
 public sealed class KeyValueDatabase(DatabaseContext _db) : IKeyValueDatabase
 {
-    public void Add(string key, string value)
+    public async Task AddAsync(string key, string value)
     {
         // FIXME: Check if the key value was actually added and return an error
-        // FIXME: Convert functions to async functions
-        _db.KeyValues.Add(new() { Key = key, Value = value });
-        _db.SaveChanges();
+        await _db.KeyValues.AddAsync(new() { Key = key, Value = value });
+        await _db.SaveChangesAsync();
     }
 
-    public void Delete(string key)
+    public async Task DeleteAsync(string key)
     {
-        _db.KeyValues
+        await _db.KeyValues
             .Where(kv => kv.Key == key)
-            .ExecuteDelete();
+            .ExecuteDeleteAsync();
     }
 
-    public bool TryGet(string key, [MaybeNullWhen(false)] out string value)
+    public async Task<(bool, string?)> TryGetAsync(string key)
     {
-        var kv = _db.KeyValues.FirstOrDefault(kv => kv.Key == key);
+        var kv = await _db.KeyValues.FirstOrDefaultAsync(kv => kv.Key == key);
         if (kv is null)
         {
-            value = null;
-            return false;
+            return (false, null);
         }
 
-        value = kv.Value;
-        return true;
+        return (true, kv.Value);
     }
 
-    public void Update(string key, string value)
+    public async Task UpdateAsync(string key, string value)
     {
-        _db.KeyValues
+        await _db.KeyValues
             .Where(kv => kv.Key == key)
-            .ExecuteUpdate(
+            .ExecuteUpdateAsync(
                 setters => setters.SetProperty(kv => kv.Value, value)
             );
     }

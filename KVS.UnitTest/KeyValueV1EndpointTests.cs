@@ -11,7 +11,7 @@ namespace KVS.UnitTests;
 public sealed class KeyValueV1EndpointTests
 {
     [Test]
-    public void HandleCreateKeyValueRequest_ReturnsCreated_WhenKeyIsNotAlreadyPresent()
+    public async Task HandleCreateKeyValueRequestAsync_ReturnsCreated_WhenKeyIsNotAlreadyPresent()
     {
         // Arrange
         const string notPresentKey = "notpresent";
@@ -21,11 +21,11 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.AddKeyValue(notPresentKey, expectedValue))
-            .Returns(new Success());
+            .Setup(m => m.AddKeyValueAsync(notPresentKey, expectedValue))
+            .ReturnsAsync(new Success());
 
         // Act
-        var result = KeyValueEndpoints.HandleCreateKeyValueRequest(CreateLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleCreateKeyValueRequestAsync(CreateLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var created = result as Created<string>;
@@ -39,7 +39,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleCreateKeyValueRequest_ReturnsConflict_WhenKeyAlreadyExists()
+    public async Task HandleCreateKeyValueRequestAsync_ReturnsConflict_WhenKeyAlreadyExists()
     {
         // Arrange
         const string presentKey = "present";
@@ -48,11 +48,11 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.AddKeyValue(presentKey, It.IsAny<string>()))
-            .Returns(new AlreadyPresentError());
+            .Setup(m => m.AddKeyValueAsync(presentKey, It.IsAny<string>()))
+            .ReturnsAsync(new AlreadyPresentError());
 
         // Act
-        var result = KeyValueEndpoints.HandleCreateKeyValueRequest(CreateLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleCreateKeyValueRequestAsync(CreateLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var created = result as Conflict<string>;
@@ -60,7 +60,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleCreateKeyValueRequest_ReturnsBadRequest_WhenKeyIsNull()
+    public async Task HandleCreateKeyValueRequestAsync_ReturnsBadRequest_WhenKeyIsNull()
     {
         // Arrange
         var request = new CreateKeyValueRequest(null!, "");
@@ -68,7 +68,7 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         // Act
-        var result = KeyValueEndpoints.HandleCreateKeyValueRequest(CreateLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleCreateKeyValueRequestAsync(CreateLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var badRequest = result as BadRequest<string>;
@@ -76,7 +76,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleCreateKeyValueRequest_ReturnsBadRequest_WhenValueIsNull()
+    public async Task HandleCreateKeyValueRequestAsync_ReturnsBadRequest_WhenValueIsNull()
     {
         // Arrange
         var request = new CreateKeyValueRequest("", null!); 
@@ -84,7 +84,7 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         // Act
-        var result = KeyValueEndpoints.HandleCreateKeyValueRequest(CreateLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleCreateKeyValueRequestAsync(CreateLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var badRequest = result as BadRequest<string>;
@@ -92,7 +92,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleReadValueRequest_ReturnsOk_WhenKeyIsPresent()
+    public async Task HandleReadValueRequestAsync_ReturnsOk_WhenKeyIsPresent()
     {
         // Arrange
         const string presentKey = "present";
@@ -101,11 +101,11 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.GetValueByKey(presentKey))
-            .Returns(new Success<string>(expectedValue));
+            .Setup(m => m.GetValueByKeyAsync(presentKey))
+            .ReturnsAsync(new Success<string>(expectedValue));
 
         // Act
-        var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, presentKey);
+        var result = await KeyValueEndpoints.HandleReadValueRequestAsync(ReadLogger, keyValueRepoMock.Object, presentKey);
 
         // Assert
         var ok = result as Ok<string>;
@@ -114,7 +114,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleReadValueRequest_ReturnsNotFound_WhenKeyIsNotPresent()
+    public async Task HandleReadValueRequestAsync_ReturnsNotFound_WhenKeyIsNotPresent()
     {
         // Arrange
         const string notPresentKey = "notpresent";
@@ -122,11 +122,11 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.GetValueByKey(notPresentKey))
-            .Returns(new OneOf.Types.NotFound());
+            .Setup(m => m.GetValueByKeyAsync(notPresentKey))
+            .ReturnsAsync(new OneOf.Types.NotFound());
 
         // Act
-        var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, notPresentKey);
+        var result = await KeyValueEndpoints.HandleReadValueRequestAsync(ReadLogger, keyValueRepoMock.Object, notPresentKey);
 
         // Assert
         var notFound = result as NotFound<string>;
@@ -134,13 +134,13 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleReadValueRequest_ReturnsBadRequest_WhenKeyIsNull()
+    public async Task HandleReadValueRequestAsync_ReturnsBadRequest_WhenKeyIsNull()
     {
         // Arrange
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         // Act
-        var result = KeyValueEndpoints.HandleReadValueRequest(ReadLogger, keyValueRepoMock.Object, null!);
+        var result = await KeyValueEndpoints.HandleReadValueRequestAsync(ReadLogger, keyValueRepoMock.Object, null!);
 
         // Assert
         var badRequest = result as BadRequest<string>;
@@ -148,7 +148,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleUpdateKeyValueRequest_ReturnsNoContent_WhenKeyIsPresent()
+    public async Task HandleUpdateKeyValueRequestAsync_ReturnsNoContent_WhenKeyIsPresent()
     {
         // Arrange
         const string presentKey = "present";
@@ -157,11 +157,11 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.UpdateKeyValue(presentKey, It.IsAny<string>()))
-            .Returns(new Success());
+            .Setup(m => m.UpdateKeyValueAsync(presentKey, It.IsAny<string>()))
+            .ReturnsAsync(new Success());
 
         // Act
-        var result = KeyValueEndpoints.HandleUpdateKeyValueRequest(UpdateLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleUpdateKeyValueRequestAsync(UpdateLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var noContent = result as NoContent;
@@ -169,7 +169,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleUpdateKeyValueRequest_ReturnsNotFound_WhenKeyIsNotPresent()
+    public async Task HandleUpdateKeyValueRequestAsync_ReturnsNotFound_WhenKeyIsNotPresent()
     {
         // Arrange
         const string notPresentKey = "notpresent";
@@ -178,11 +178,11 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.UpdateKeyValue(notPresentKey, It.IsAny<string>()))
-            .Returns(new OneOf.Types.NotFound());
+            .Setup(m => m.UpdateKeyValueAsync(notPresentKey, It.IsAny<string>()))
+            .ReturnsAsync(new OneOf.Types.NotFound());
 
         // Act
-        var result = KeyValueEndpoints.HandleUpdateKeyValueRequest(UpdateLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleUpdateKeyValueRequestAsync(UpdateLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var notFound = result as NotFound<string>;
@@ -190,7 +190,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleUpdateKeyValueRequest_ReturnsBadRequest_WhenKeyIsNull()
+    public async Task HandleUpdateKeyValueRequestAsync_ReturnsBadRequest_WhenKeyIsNull()
     {
         // Arrange
         var request = new UpdateKeyValueRequest(null!, "");
@@ -198,7 +198,7 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         // Act
-        var result = KeyValueEndpoints.HandleUpdateKeyValueRequest(UpdateLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleUpdateKeyValueRequestAsync(UpdateLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var badRequest = result as BadRequest<string>;
@@ -206,7 +206,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleUpdateKeyValueRequest_ReturnsBadRequest_WhenValueIsNull()
+    public async Task HandleUpdateKeyValueRequestAsync_ReturnsBadRequest_WhenValueIsNull()
     {
         // Arrange
         var request = new UpdateKeyValueRequest("", null!);
@@ -214,7 +214,7 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         // Act
-        var result = KeyValueEndpoints.HandleUpdateKeyValueRequest(UpdateLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleUpdateKeyValueRequestAsync(UpdateLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var badRequest = result as BadRequest<string>;
@@ -222,7 +222,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleRemoveKeyRequest_ReturnsNoContent_WhenKeyIsPresent()
+    public async Task HandleRemoveKeyRequestAsync_ReturnsNoContent_WhenKeyIsPresent()
     {
         // Arrange
         const string presentKey = "present";
@@ -231,11 +231,11 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.RemoveByKey(presentKey))
-            .Returns(new Success());
+            .Setup(m => m.RemoveByKeyAsync(presentKey))
+            .ReturnsAsync(new Success());
 
         // Act
-        var result = KeyValueEndpoints.HandleRemoveKeyRequest(DeleteLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleRemoveKeyRequestAsync(DeleteLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var noContent = result as NoContent;
@@ -243,7 +243,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleRemoveKeyRequest_ReturnsNotFound_WhenKeyIsNotPresent()
+    public async Task HandleRemoveKeyRequestAsync_ReturnsNotFound_WhenKeyIsNotPresent()
     {
         // Arrange
         const string notPresentKey = "notpresent";
@@ -252,11 +252,11 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         keyValueRepoMock
-            .Setup(m => m.RemoveByKey(notPresentKey))
-            .Returns(new OneOf.Types.NotFound());
+            .Setup(m => m.RemoveByKeyAsync(notPresentKey))
+            .ReturnsAsync(new OneOf.Types.NotFound());
 
         // Act
-        var result = KeyValueEndpoints.HandleRemoveKeyRequest(DeleteLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleRemoveKeyRequestAsync(DeleteLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var notFound = result as NotFound<string>;
@@ -264,7 +264,7 @@ public sealed class KeyValueV1EndpointTests
     }
 
     [Test]
-    public void HandleRemoveKeyRequest_ReturnsBadRequest_WhenKeyIsNull()
+    public async Task HandleRemoveKeyRequestAsync_ReturnsBadRequest_WhenKeyIsNull()
     {
         // Arrange
         var request = new RemoveKeyRequest(null!);
@@ -272,7 +272,7 @@ public sealed class KeyValueV1EndpointTests
         var keyValueRepoMock = new Mock<IKeyValueRepository>();
 
         // Act
-        var result = KeyValueEndpoints.HandleRemoveKeyRequest(DeleteLogger, keyValueRepoMock.Object, request);
+        var result = await KeyValueEndpoints.HandleRemoveKeyRequestAsync(DeleteLogger, keyValueRepoMock.Object, request);
 
         // Assert
         var badRequest = result as BadRequest<string>;

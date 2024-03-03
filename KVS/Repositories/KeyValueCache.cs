@@ -46,6 +46,14 @@ public sealed class KeyValueCache : IKeyValueCache
         return keyValues.ContainsKey(key);
     }
 
+    public void UpdateOrAdd(string key, string newValue)
+    {
+        if (!keyValues.TryAdd(key, newValue))
+        {
+            keyValues[key] = newValue;
+        }
+    }
+
     public string this[string key] 
     { 
         get => keyValues[key];
