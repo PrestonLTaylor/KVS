@@ -1,0 +1,18 @@
+﻿apiVersion: v1
+
+kind: Service
+
+metadata:
+  name: kvs-lb-service
+
+spec:
+  type: LoadBalancer
+
+  selector:
+    app.kubernetes.io/name: kvs-api
+
+  ports:
+    - port: 80
+      targetPort: 80
+      name: lb-http-port
+      protocol: TCP
