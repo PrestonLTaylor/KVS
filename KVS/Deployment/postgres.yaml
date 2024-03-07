@@ -1,0 +1,55 @@
+﻿apiVersion: apps/v1
+
+kind: StatefulSet
+
+metadata:
+  name: postgres-set
+  namespace: kvs-ns
+
+  annotations:
+    kubernetes.io/change-cause: "Initial deployment of postgreSQL database"
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: postgres
+
+  template:
+    metadata:
+      labels:
+        app: postgres
+        app.kubernetes.io/name: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:latest
+        env:
+          - name: POSTGRES_INITDB_ARGS
+            value: --auth-host=scram-sha-256
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-credentials
+                key: postgres-password
+        # FIXME: Add an InitContainers job that performs migrations automatically
+
+---
+
+apiVersion: v1
+
+kind: Service
+
+metadata:
+  name: postgres-service
+  namespace: kvs-ns
+
+spec:
+  selector:
+    app.kubernetes.io/name: postgres
+  ports:
+    - protocol: TCP
+      name: postgres-port
+      port: 5432
+      targetPort: 5432

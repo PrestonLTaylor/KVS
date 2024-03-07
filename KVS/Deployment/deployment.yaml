@@ -1,0 +1,66 @@
+﻿apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+  name: kvs-api-deployment
+  namespace: kvs-ns
+
+  annotations:
+    kubernetes.io/change-cause: "Initial deployment of the KVS API"
+
+# FIXME: InitContainers that waits for rabbit-mq and postgres to finish initializing
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: kvs-api
+
+  template:
+    metadata:
+      name: kvs-api
+      labels:
+        env: prod
+        app: kvs-api
+        app.kubernetes.io/name: kvs-api
+    spec:
+      containers:
+      - name: kvs-api
+        image: prestonltaylor/kvs:1.0.0
+        ports:
+          - containerPort: 80
+            name: kvs-http-port
+        resources:
+          requests:
+            cpu: 100m
+            memory: 1024Mi
+          limits:
+            cpu: 200m
+            memory: 1024Mi
+        env:
+          - name: ASPNETCORE_HTTP_PORTS
+            value: "80"
+          # FIXME: Document how to fully setup and deploy to a kubernetes clusteres (incl. dependencies)
+          # FIXME: Document how to use HTTPS in production environments (e.g. certificates)
+          # FIXME: kubernetes secrets by default are only base64 encoded, store credentials in a safer manner
+          - name: rabbit-mq-username
+            valueFrom:
+              secretKeyRef:
+                name: rabbit-mq-credentials
+                key: rabbit-mq-username
+          - name: rabbit-mq-password
+            valueFrom:
+              secretKeyRef:
+                name: rabbit-mq-credentials
+                key: rabbit-mq-password
+          - name: rabbit-mq-host
+            valueFrom:
+              secretKeyRef:
+                name: rabbit-mq-credentials
+                key: rabbit-mq-host
+          - name: POSTGRESQLCONNSTR_DefaultConnection
+            valueFrom:
+              secretKeyRef:
+                name: postgres-credentials
+                key: POSTGRESQLCONNSTR_DefaultConnection

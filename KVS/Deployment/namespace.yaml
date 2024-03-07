@@ -1,0 +1,7 @@
+﻿# FIXME/NOTE: Document that this file has to be applied first, so the namespace is created for the other k8 files
+apiVersion: v1
+
+kind: Namespace
+
+metadata:
+  name: kvs-ns    
