@@ -1,0 +1,58 @@
+﻿apiVersion: apps/v1
+
+kind: StatefulSet
+
+metadata:
+  name: rabbit-mq-set
+  namespace: kvs-ns
+
+  annotations:
+    kubernetes.io/change-cause: "Initial deployment of RabbitMQ"
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: rabbit-mq
+
+  template:
+    metadata:
+      labels:
+        app: rabbit-mq
+        app.kubernetes.io/name: rabbit-mq
+    spec:
+      containers:
+      - name: rabbit-mq
+        # FIXME: Document that the tag should be changed between latest and management depending on needs/security
+        image: rabbitmq:management
+        env:
+          - name: RABBITMQ_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                name: rabbit-mq-credentials
+                key: rabbit-mq-username
+          - name: RABBITMQ_DEFAULT_PASS
+            valueFrom:
+              secretKeyRef:
+                name: rabbit-mq-credentials
+                key: rabbit-mq-password
+
+---
+
+apiVersion: v1
+
+kind: Service
+
+metadata:
+  name: rabbit-mq-service
+  namespace: kvs-ns
+
+spec:
+  selector:
+    app.kubernetes.io/name: rabbit-mq
+  ports:
+    - protocol: TCP
+      name: rabbit-mq-port
+      port: 5672
+      targetPort: 5672
