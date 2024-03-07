@@ -9,6 +9,7 @@ metadata:
   annotations:
     kubernetes.io/change-cause: "Initial deployment of the KVS API"
 
+# FIXME: InitContainers that waits for rabbit-mq and postgres to finish initializing
 spec:
   replicas: 2
 
