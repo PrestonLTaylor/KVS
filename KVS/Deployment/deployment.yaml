@@ -4,6 +4,7 @@ kind: Deployment
 
 metadata:
   name: kvs-api-deployment
+  namespace: kvs-ns
 
   annotations:
     kubernetes.io/change-cause: "Initial deployment of the KVS API"

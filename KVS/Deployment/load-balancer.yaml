@@ -4,6 +4,7 @@ kind: Service
 
 metadata:
   name: kvs-lb-service
+  namespace: kvs-ns
 
 spec:
   type: LoadBalancer
