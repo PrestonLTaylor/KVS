@@ -53,7 +53,7 @@ public static class KeyValueEndpoints
             success =>
             {
                 logger.LogInformation("Key '{NewKey}' was successfully created with an initial value of '{InitialValue}'", request.NewKey, request.Value);
-                return Results.Created($"/{request.NewKey}", request.Value);
+                return Results.Created($"/v1/{request.NewKey}", request.Value);
             },
             alreadyExists =>
             {

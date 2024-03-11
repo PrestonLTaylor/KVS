@@ -33,7 +33,7 @@ public sealed class KeyValueV1EndpointTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(created.Location, Is.EqualTo($"/{notPresentKey}"));
+            Assert.That(created.Location, Is.EqualTo($"/v1/{notPresentKey}"));
             Assert.That(created.Value, Is.EqualTo(expectedValue));
         });
     }
