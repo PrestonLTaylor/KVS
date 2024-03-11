@@ -56,3 +56,5 @@ app.UseHttpsRedirection();
 app.MapKeyValueV1Endpoints();
 
 app.Run();
+
+public partial class Program { }

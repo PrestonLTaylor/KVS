@@ -1,7 +1,6 @@
 ﻿using Asp.Versioning;
 using KVS.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace KVS.Endpoints.v1;
 
