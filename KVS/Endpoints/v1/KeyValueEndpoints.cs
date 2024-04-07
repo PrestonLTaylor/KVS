@@ -12,8 +12,14 @@ public record struct UpdateKeyValueRequest(string Key, string NewValue);
 
 public record struct RemoveKeyRequest(string Key);
 
+/// <summary>
+/// The class that defines our key value API endpoints
+/// </summary>
 public static class KeyValueEndpoints
 {
+    /// <summary>
+    /// Maps the our methods to API endpoints for the respective HTTP verbs
+    /// </summary>
     static public WebApplication MapKeyValueV1Endpoints(this WebApplication app)
     {
         var kvApi = app.NewVersionedApi();
@@ -33,6 +39,17 @@ public static class KeyValueEndpoints
         return app;
     }
 
+    /// <summary>
+    /// Handles a request from a user to create a key value pair inside of our repository.
+    /// </summary>
+    /// <param name="logger">The logger for <see cref="HandleCreateKeyValueRequestAsync"/>.</param>
+    /// <param name="repo">The repository that handles the persistance and caching of key value pairs.</param>
+    /// <param name="request">The request from the user that holds the new key and respective value to create.</param>
+    /// <returns>
+    /// 201 Created if the key value was successfuly created inside our repository.<br/>
+    /// 400 Bad Request if either the provided key or value is null.<br/>
+    /// 409 Conflict if the key already exists in our repository.<br/>
+    /// </returns>
     [ProducesResponseType(201)]
     [ProducesResponseType(400)]
     [ProducesResponseType(409)]
@@ -62,6 +79,17 @@ public static class KeyValueEndpoints
         );
     }
 
+    /// <summary>
+    /// Handles a request from a user to read a key value pair from our repository.
+    /// </summary>
+    /// <param name="logger">The logger for <see cref="HandleReadValueRequestAsync"/>.</param>
+    /// <param name="repo">The repository that handles the persistance and caching of key value pairs.</param>
+    /// <param name="key">The key that the user is requesting value of.</param>
+    /// <returns>
+    /// 200 Ok if the respective key value pair was found in the repository.<br/>
+    /// 400 Bad Request if provided key is null.<br/>
+    /// 404 Not Found if the key was not found in the repository.<br/>
+    /// </returns>
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
@@ -91,6 +119,17 @@ public static class KeyValueEndpoints
         );
     }
 
+    /// <summary>
+    /// Handles a request from a user to update a key value pair inside of our repository.
+    /// </summary>
+    /// <param name="logger">The logger for <see cref="HandleUpdateKeyValueRequestAsync"/>.</param>
+    /// <param name="repo">The repository that handles the persistance and caching of key value pairs.</param>
+    /// <param name="request">The request from the user that holds an existing key to update and the respective value.</param>
+    /// <returns>
+    /// 204 No Content if the respective key value pair was found and updated in the repository.<br/>
+    /// 400 Bad Request if either the provided key or value is null.<br/>
+    /// 404 Not Found if the key was not found in the repository.<br/>
+    /// </returns>
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
@@ -120,6 +159,17 @@ public static class KeyValueEndpoints
         );
     }
 
+    /// <summary>
+    /// Handles a request from a user to delete a key value pair from our repository.
+    /// </summary>
+    /// <param name="logger">The logger for <see cref="HandleRemoveKeyRequestAsync"/>.</param>
+    /// <param name="repo">The repository that handles the persistance and caching of key value pairs.</param>
+    /// <param name="request">The request from the user that holds an existing key.</param>
+    /// <returns>
+    /// 204 No Content if the respective key value pair was found and deleted in the repository.<br/>
+    /// 400 Bad Request if the provided key is null.<br/>
+    /// 404 Not Found if the key was not found in the repository.<br/>
+    /// </returns>
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]

@@ -13,8 +13,16 @@ public enum CacheState
     Deleted
 }
 
+/// <summary>
+/// Our implementation for a key value pair repository that manages a cache and database.
+/// </summary>
+/// <param name="_logger">The logger for <see cref="KeyValueRepository"/>.</param>
+/// <param name="_cache">The key value pair cache being managed by the repository.</param>
+/// <param name="_database">The key value pair database being managed by the repository.</param>
+/// <param name="_bus">The bus used to send <see cref="KeyModified"/> and <see cref="KeyDeletion"/> messages.</param>
 public sealed class KeyValueRepository(ILogger<KeyValueRepository> _logger, IKeyValueCache _cache, IKeyValueDatabase _database, IBus _bus) : IKeyValueRepository
 {
+    /// <inheritdoc/>
     public async Task<OneOf<Success, AlreadyPresentError>> AddKeyValueAsync(string key, string value)
     {
         await UpdateValueIfDirtyCacheValue(key);
@@ -33,6 +41,7 @@ public sealed class KeyValueRepository(ILogger<KeyValueRepository> _logger, IKey
         return new Success();
     }
 
+    /// <inheritdoc/>
     public async Task<OneOf<Success<string>, NotFound>> GetValueByKeyAsync(string key)
     {
         await UpdateValueIfDirtyCacheValue(key);
@@ -45,6 +54,7 @@ public sealed class KeyValueRepository(ILogger<KeyValueRepository> _logger, IKey
         return new NotFound();
     }
 
+    /// <inheritdoc/>
     public async Task<OneOf<Success, NotFound>> RemoveByKeyAsync(string key)
     {
         await UpdateValueIfDirtyCacheValue(key);
@@ -62,6 +72,7 @@ public sealed class KeyValueRepository(ILogger<KeyValueRepository> _logger, IKey
         return new Success();
     }
 
+    /// <inheritdoc/>
     public async Task<OneOf<Success, NotFound>> UpdateKeyValueAsync(string key, string newValue)
     {
         await UpdateValueIfDirtyCacheValue(key);
@@ -91,6 +102,7 @@ public sealed class KeyValueRepository(ILogger<KeyValueRepository> _logger, IKey
         await _bus.Publish(new KeyDeletion(NodeId, key));
     }
 
+    /// <inheritdoc/>
     public void SetCacheFlagToModified(string modifiedKey)
     {
         if (!_keyToState.TryAdd(modifiedKey, CacheState.Modified))
@@ -99,6 +111,7 @@ public sealed class KeyValueRepository(ILogger<KeyValueRepository> _logger, IKey
         }
     }
 
+    /// <inheritdoc/>
     public void SetCacheFlagToDeleted(string deletedKey)
     {
         if (!_keyToState.TryAdd(deletedKey, CacheState.Deleted))

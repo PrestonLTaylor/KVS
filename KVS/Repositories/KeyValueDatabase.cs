@@ -1,12 +1,15 @@
 ﻿using KVS.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics.CodeAnalysis;
 
 namespace KVS.Repositories;
 
-// FIXME: Testing for this class (integration tests) when we have pubsub messaging set up
+/// <summary>
+/// Our implementation for a key value pair persistance database.
+/// </summary>
+/// <param name="_db">The database context for the underlying database</param>
 public sealed class KeyValueDatabase(DatabaseContext _db) : IKeyValueDatabase
 {
+    /// <inheritdoc/>
     public async Task AddAsync(string key, string value)
     {
         // FIXME: Check if the key value was actually added and return an error
@@ -14,6 +17,7 @@ public sealed class KeyValueDatabase(DatabaseContext _db) : IKeyValueDatabase
         await _db.SaveChangesAsync();
     }
 
+    /// <inheritdoc/>
     public async Task DeleteAsync(string key)
     {
         await _db.KeyValues
@@ -21,6 +25,7 @@ public sealed class KeyValueDatabase(DatabaseContext _db) : IKeyValueDatabase
             .ExecuteDeleteAsync();
     }
 
+    /// <inheritdoc/>
     public async Task<(bool, string?)> TryGetAsync(string key)
     {
         var kv = await _db.KeyValues.FirstOrDefaultAsync(kv => kv.Key == key);
@@ -32,6 +37,7 @@ public sealed class KeyValueDatabase(DatabaseContext _db) : IKeyValueDatabase
         return (true, kv.Value);
     }
 
+    /// <inheritdoc/>
     public async Task UpdateAsync(string key, string value)
     {
         await _db.KeyValues
